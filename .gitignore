@@ -1,0 +1,12 @@
+node_modules/
+.env
+.env.local
+.env.production
+*.log
+.DS_Store
+packages/*/generated/
+packages/*/build/
+packages/*/node_modules/
+services/*/node_modules/
+services/*/dist/
+docker/**/data/

@@ -1,0 +1,26 @@
+{
+  "name": "aavegotchi-envio-indexers",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Self-hosted Aavegotchi Core + Gotchiverse indexers (Envio + Docker + RunOnFlux)",
+  "scripts": {
+    "codegen:core": "cd packages/core-base && npm run codegen",
+    "codegen:gv": "cd packages/gotchiverse-base && npm run codegen",
+    "build:core": "cd packages/core-base && npm run build",
+    "build:gv": "cd packages/gotchiverse-base && npm run build",
+    "build:proxy": "cd services/graphql-proxy && npm run build",
+    "build": "npm run build:core && npm run build:gv && npm run build:proxy",
+    "dev:core": "cd packages/core-base && npm run dev",
+    "dev:gv": "cd packages/gotchiverse-base && npm run dev",
+    "dev:proxy": "cd services/graphql-proxy && npm run dev",
+    "docker:core": "docker compose -f docker/core-base/docker-compose.yaml --env-file .env up --build -d",
+    "docker:gv": "docker compose -f docker/gotchiverse-base/docker-compose.yaml --env-file .env up --build -d",
+    "docker:proxy": "docker compose -f docker/graphql-proxy/docker-compose.yaml --env-file .env up --build -d",
+    "docker:down": "docker compose -f docker/core-base/docker-compose.yaml down && docker compose -f docker/gotchiverse-base/docker-compose.yaml down && docker compose -f docker/graphql-proxy/docker-compose.yaml down",
+    "parity": "bash scripts/parity-check.sh",
+    "smoke": "bash scripts/smoke-test.sh"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

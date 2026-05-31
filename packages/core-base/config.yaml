@@ -1,0 +1,49 @@
+# yaml-language-server: $schema=./node_modules/envio/evm.schema.json
+name: aavegotchi-core-base
+description: Aavegotchi Core indexer for Base chain (port of core subgraph)
+contracts:
+  - name: AavegotchiDiamond
+    abi_file_path: ./abis/AavegotchiDiamond.json
+    handler: ./src/EventHandlers.ts
+    events:
+      - event: Transfer
+      - event: ClaimAavegotchi
+      - event: ERC721ListingAdd
+      - event: ERC721ExecutedListing
+      - event: ERC721ListingCancelled
+      - event: ERC721ListingRemoved
+      - event: ERC721ListingPriceUpdate
+      - event: ERC721ListingWhitelistSet
+      - event: ERC721ExecutedToRecipient
+      - event: ERC1155ListingAdd
+      - event: ERC1155ExecutedListing
+      - event: ERC1155ListingCancelled
+      - event: ERC1155ListingRemoved
+      - event: UpdateERC1155Listing
+      - event: ERC1155ListingPriceUpdate
+      - event: ERC1155ListingWhitelistSet
+      - event: ERC1155ExecutedToRecipient
+      - event: GotchiLendingAdded
+      - event: GotchiLendingExecuted
+      - event: GotchiLendingCancelled
+      - event: GotchiLendingClaimed
+      - event: GotchiLendingEnded
+      - event: GotchiLendingCancel
+  - name: RealmDiamond
+    abi_file_path: ./abis/RealmDiamond.json
+    handler: ./src/EventHandlers.ts
+    events:
+      - event: MintParcel
+      - event: Transfer
+      - event: ResyncParcel
+networks:
+  - id: 8453
+    start_block: 33201946
+    rpc_config:
+      url: https://mainnet.base.org
+    contracts:
+      - name: AavegotchiDiamond
+        address: "0xA99c4B08201F2913Db8D28e71d020c4298F29dBF"
+      - name: RealmDiamond
+        address: "0x4B0040c3646D3c44B8a28Ad7055cfCF536c05372"
+unordered_multichain_mode: false

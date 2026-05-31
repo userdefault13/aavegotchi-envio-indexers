@@ -1,0 +1,22 @@
+export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
+
+export const PORTAL_STATUS_BOUGHT = "Bought";
+export const PORTAL_STATUS_OPENED = "Opened";
+export const PORTAL_STATUS_CLAIMED = "Claimed";
+
+export const BIGINT_ZERO = 0n;
+export const BIGINT_ONE = 1n;
+
+export const STATUS_CLOSED_PORTAL = 0n;
+export const STATUS_VRF_PENDING = 1n;
+export const STATUS_OPEN_PORTAL = 2n;
+export const STATUS_AAVEGOTCHI = 3n;
+
+export const SOCKET_VAULT_ADDRESS =
+  "0xf1d1d61eedda7a10b494af7af87d932ac910f3c5";
+
+export const CORE_DIAMOND_ADDRESS =
+  "0xA99c4B08201F2913Db8D28e71d020c4298F29dBF" as const;
+
+export const REALM_DIAMOND_ADDRESS =
+  "0x4B0040c3646D3c44B8a28Ad7055cfCF536c05372" as const;

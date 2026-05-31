@@ -1,0 +1,36 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Build core indexer
+        working-directory: packages/core-base
+        env:
+          ENVIO_API_TOKEN: development
+        run: |
+          npm install
+          npx envio codegen
+          npm run build
+      - name: Build gotchiverse indexer
+        working-directory: packages/gotchiverse-base
+        env:
+          ENVIO_API_TOKEN: development
+        run: |
+          npm install
+          npx envio codegen
+          npm run build
+      - name: Build graphql proxy
+        working-directory: services/graphql-proxy
+        run: |
+          npm install
+          npm run build

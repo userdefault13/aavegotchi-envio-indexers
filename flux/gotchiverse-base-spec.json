@@ -1,0 +1,81 @@
+{
+  "version": 8,
+  "name": "gotchiversebase",
+  "description": "Gotchiverse Base Envio indexer (Postgres + Hasura + Envio)",
+  "owner": "REPLACE_WITH_FLUX_ZELID",
+  "instances": 3,
+  "staticip": false,
+  "enterprise": "",
+  "contacts": [],
+  "geolocation": [],
+  "compose": [
+    {
+      "name": "postgres",
+      "description": "Gotchiverse indexer Postgres",
+      "repotag": "postgres:17.5",
+      "ports": [],
+      "containerPorts": [5432],
+      "domains": [""],
+      "environmentParameters": [
+        "POSTGRES_USER=postgres",
+        "POSTGRES_DB=envio-gv",
+        "POSTGRES_PASSWORD=REPLACE_PG_PASSWORD"
+      ],
+      "commands": [],
+      "containerData": "/var/lib/postgresql/data",
+      "cpu": 2,
+      "ram": 4096,
+      "hdd": 200,
+      "tiered": false
+    },
+    {
+      "name": "hasura",
+      "description": "Hasura GraphQL for gotchiverse indexer",
+      "repotag": "hasura/graphql-engine:v2.43.0",
+      "ports": [8081],
+      "containerPorts": [8080],
+      "domains": [""],
+      "environmentParameters": [
+        "HASURA_GRAPHQL_DATABASE_URL=postgres://postgres:REPLACE_PG_PASSWORD@postgres:5432/envio-gv",
+        "HASURA_GRAPHQL_ENABLE_CONSOLE=false",
+        "HASURA_GRAPHQL_ADMIN_SECRET=REPLACE_HASURA_SECRET",
+        "HASURA_GRAPHQL_STRINGIFY_NUMERIC_TYPES=true",
+        "HASURA_GRAPHQL_UNAUTHORIZED_ROLE=public"
+      ],
+      "commands": [],
+      "containerData": "",
+      "cpu": 1,
+      "ram": 2048,
+      "hdd": 2,
+      "tiered": false
+    },
+    {
+      "name": "indexer",
+      "description": "Envio gotchiverse-base indexer",
+      "repotag": "userdefault13/aavegotchi-gotchiverse-envio:latest",
+      "ports": [],
+      "containerPorts": [9899],
+      "domains": [""],
+      "environmentParameters": [
+        "ENVIO_API_TOKEN=REPLACE_ENVIO_TOKEN",
+        "ENVIO_PG_HOST=postgres",
+        "ENVIO_PG_PORT=5432",
+        "ENVIO_PG_USER=postgres",
+        "ENVIO_PG_PASSWORD=REPLACE_PG_PASSWORD",
+        "ENVIO_PG_DATABASE=envio-gv",
+        "HASURA_GRAPHQL_ENDPOINT=http://hasura:8080/v1/metadata",
+        "HASURA_GRAPHQL_ADMIN_SECRET=REPLACE_HASURA_SECRET",
+        "HASURA_SERVICE_HOST=hasura",
+        "HASURA_SERVICE_PORT=8080",
+        "TUI_OFF=true",
+        "LOG_LEVEL=info"
+      ],
+      "commands": [],
+      "containerData": "",
+      "cpu": 4,
+      "ram": 8192,
+      "hdd": 5,
+      "tiered": false
+    }
+  ]
+}

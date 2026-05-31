@@ -1,0 +1,33 @@
+{
+  "version": 8,
+  "name": "aavegotchisubgraphproxy",
+  "description": "The Graph compatibility proxy for Aavegotchi Core + Gotchiverse Hasura backends",
+  "owner": "REPLACE_WITH_FLUX_ZELID",
+  "instances": 3,
+  "staticip": false,
+  "enterprise": "",
+  "contacts": [],
+  "geolocation": [],
+  "compose": [
+    {
+      "name": "proxy",
+      "description": "GraphQL compat proxy",
+      "repotag": "userdefault13/aavegotchi-graphql-proxy:latest",
+      "ports": [8787],
+      "containerPorts": [8787],
+      "domains": [""],
+      "environmentParameters": [
+        "PROXY_PORT=8787",
+        "CORE_HASURA_URL=http://REPLACE_CORE_HASURA_HOST:8080/v1/graphql",
+        "GV_HASURA_URL=http://REPLACE_GV_HASURA_HOST:8081/v1/graphql",
+        "HASURA_ADMIN_SECRET=REPLACE_HASURA_SECRET"
+      ],
+      "commands": [],
+      "containerData": "",
+      "cpu": 1,
+      "ram": 1024,
+      "hdd": 2,
+      "tiered": false
+    }
+  ]
+}

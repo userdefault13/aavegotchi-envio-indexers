@@ -1,0 +1,93 @@
+type Parcel {
+  id: ID!
+  equippedInstallations: [String!]!
+  equippedTiles: [String!]!
+  lastChanneledAlchemica: BigInt
+  lastClaimedAlchemica: BigInt
+  owner: String
+
+  tokenId: BigInt
+  parcelId: String
+  coordinateX: BigInt
+  coordinateY: BigInt
+  district: BigInt
+  parcelHash: String
+
+  fudBoost: BigInt
+  fomoBoost: BigInt
+  alphaBoost: BigInt
+  kekBoost: BigInt
+
+  size: BigInt
+
+  accessRights: [ParcelAccessRight!]! @derivedFrom(field: "parcel")
+
+  remainingAlchemica: [BigInt!]!
+  surveyRound: Int!
+}
+
+type ParcelAccessRight {
+  id: ID!
+  parcel: String!
+  whitelistId: Int
+  accessRight: Int!
+  actionRight: Int!
+}
+
+type Tile {
+  id: ID!
+  typeId: String
+  x: BigInt
+  y: BigInt
+  equipped: Boolean!
+  parcel: String
+  owner: String
+}
+
+type Installation {
+  id: ID!
+  typeId: String
+  x: BigInt
+  y: BigInt
+  equipped: Boolean!
+  parcel: String
+  owner: String
+}
+
+type InstallationType {
+  id: ID!
+  width: Int
+  height: Int
+  installationType: Int
+  level: Int
+  alchemicaType: Int
+  spillRadius: BigInt
+  spillRate: Int
+  upgradeQueueBoost: Int
+  craftTime: BigInt
+  nextLevelId: BigInt
+  deprecated: Boolean
+  deprecatedAt: BigInt!
+  alchemicaCost: [BigInt!]
+  harvestRate: BigInt
+  capacity: BigInt
+  prerequisites: [BigInt!]
+  amountPrerequisites: Int
+  name: String
+  amount: BigInt!
+  uri: String
+}
+
+type TileType {
+  id: ID!
+  width: Int!
+  height: Int!
+  deprecated: Boolean!
+  deprecatedAt: BigInt!
+  tileType: Int!
+  craftTime: BigInt!
+  alchemicaCost: [BigInt!]!
+  name: String!
+  amount: BigInt!
+  uri: String
+}

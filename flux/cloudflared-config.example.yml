@@ -1,0 +1,12 @@
+# Example Cloudflare Tunnel config — copy to /etc/cloudflared/config.yml on bridge host
+# Create tunnel: cloudflared tunnel create aavegotchi-subgraphs
+
+tunnel: REPLACE_TUNNEL_ID
+credentials-file: /etc/cloudflared/aavegotchi-subgraphs.json
+
+ingress:
+  - hostname: core-subgraph.yourdomain.com
+    service: http://127.0.0.1:8787
+  - hostname: gotchiverse-subgraph.yourdomain.com
+    service: http://127.0.0.1:8787
+  - service: http_status:404

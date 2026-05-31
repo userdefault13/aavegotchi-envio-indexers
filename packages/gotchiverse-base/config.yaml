@@ -1,0 +1,59 @@
+# yaml-language-server: $schema=./node_modules/envio/evm.schema.json
+name: gotchiverse-base
+description: Gotchiverse Realm / Installation / Tile indexer for Base chain
+contracts:
+  - name: RealmDiamond
+    abi_file_path: ./abis/RealmDiamond.json
+    handler: ./src/EventHandlers.ts
+    events:
+      - event: MintParcel
+      - event: Transfer
+      - event: ResyncParcel
+      - event: SurveyParcel
+      - event: AlchemicaClaimed
+      - event: EquipInstallation
+      - event: UnequipInstallation
+      - event: InstallationUpgraded
+      - event: EquipTile
+      - event: UnequipTile
+      - event: ParcelAccessRightSet
+      - event: ParcelWhitelistSet
+  - name: InstallationDiamond
+    abi_file_path: ./abis/InstallationDiamond.json
+    handler: ./src/EventHandlers.ts
+    events:
+      - event: MintInstallation
+      - event: MintInstallations
+      - event: AddInstallationType
+      - event: EditInstallationType
+      - event: DeprecateInstallation
+      - event: EditDeprecateTime
+      - event: UpgradeInitiated
+      - event: URI
+  - name: TileDiamond
+    abi_file_path: ./abis/TileDiamond.json
+    handler: ./src/EventHandlers.ts
+    events:
+      - event: MintTile
+      - event: MintTiles
+      - event: EditTileType
+      - event: EditDeprecateTime
+      - event: URI
+networks:
+  - id: 8453
+    start_block: 33969747
+    rpc_config:
+      url: https://mainnet.base.org
+    contracts:
+      - name: RealmDiamond
+        address: "0x4B0040c3646D3c44B8a28Ad7055cfCF536c05372"
+      - name: InstallationDiamond
+        address: "0xebba5b725A2889f7f089a6cAE0246A32cad4E26b"
+      - name: TileDiamond
+        address: "0x617fdB8093b309e4699107F48812b407A7c37938"
+unordered_multichain_mode: false
+field_selection:
+  transaction_fields:
+    - hash
+    - from
+    - to
