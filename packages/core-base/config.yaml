@@ -23,27 +23,93 @@ contracts:
       - event: ERC1155ListingPriceUpdate
       - event: ERC1155ListingWhitelistSet
       - event: ERC1155ExecutedToRecipient
-      - event: GotchiLendingAdded
-      - event: GotchiLendingExecuted
+      - event: GotchiLendingAdded((uint32,address,uint32,uint96,uint32,uint8[3],address,address,uint32,address[],uint256,uint256))
+      - event: GotchiLendingExecuted((uint32,address,address,uint32,uint96,uint32,uint8[3],address,address,uint32,address[],uint256,uint256))
       - event: GotchiLendingCancelled
-      - event: GotchiLendingClaimed
-      - event: GotchiLendingEnded
+      - event: GotchiLendingClaimed((uint32,address,address,uint32,uint96,uint32,uint8[3],address,address,uint32,address[],uint256[],uint256,uint256))
+      - event: GotchiLendingEnded((uint32,address,address,uint32,uint96,uint32,uint8[3],address,address,uint32,address[],uint256,uint256))
       - event: GotchiLendingCancel
+      - event: AddItemType
+      - event: UpdateItemType
+      - event: ItemTypeMaxQuantity
+      - event: PurchaseItemsWithGhst
+      - event: PurchaseItemsWithVouchers
+      - event: MigrateVouchers
+      - event: AddWearableSet
+      - event: UpdateWearableSet
+      - event: ItemModifiersSet
+      - event: WearableSlotPositionsSet
+      - event: UpdateItemPrice
+      - event: EquipWearables
+      - event: EquipDelegatedWearables
+      - event: WearablesConfigCreated
+      - event: WearablesConfigUpdated
+      - event: WhitelistCreated
+      - event: WhitelistUpdated
+      - event: WhitelistOwnershipTransferred
+      - event: WhitelistAccessRightSet
+      - event: ERC721BuyOrderAdded
+      - event: ERC721BuyOrderExecuted
+      - event: ERC721BuyOrderCanceled
+      - event: ERC1155BuyOrderAdd
+      - event: ERC1155BuyOrderExecute
+      - event: ERC1155BuyOrderCancel
+      - event: RoleGranted
+      - event: RoleRevoked
+      - event: TokensCommitted
+      - event: TokensReleased
   - name: RealmDiamond
     abi_file_path: ./abis/RealmDiamond.json
     handler: ./src/EventHandlers.ts
     events:
       - event: MintParcel
       - event: Transfer
-      - event: ResyncParcel
+  - name: WearableDiamond
+    abi_file_path: ./abis/AavegotchiDiamond.json
+    handler: ./src/EventHandlers.ts
+    events:
+      - event: TransferSingle
+      - event: TransferBatch
+  - name: FAKEGotchisCardDiamond
+    abi_file_path: ./abis/diamond_erc1155.json
+    handler: ./src/EventHandlers.ts
+    events:
+      - event: NewSeriesStarted
+      - event: TransferSingle
+      - event: TransferBatch
+  - name: FAKEGotchisNFTDiamond
+    abi_file_path: ./abis/diamond_erc721.json
+    handler: ./src/EventHandlers.ts
+    events:
+      - event: Transfer
+      - event: MetadataActionLog
+      - event: MetadataFlag
+      - event: MetadataLike
 networks:
   - id: 8453
     start_block: 33201946
-    rpc_config:
-      url: https://mainnet.base.org
+    # HyperSync is primary; RPC fallbacks activate after ~20s stall (TLS blips, etc.)
+    rpc:
+      - url: https://mainnet.base.org
+        for: fallback
+        fallback_stall_timeout: 15000
+        query_timeout_millis: 20000
+      - url: https://base-rpc.publicnode.com
+        for: fallback
+        fallback_stall_timeout: 15000
+        query_timeout_millis: 20000
     contracts:
       - name: AavegotchiDiamond
         address: "0xA99c4B08201F2913Db8D28e71d020c4298F29dBF"
       - name: RealmDiamond
         address: "0x4B0040c3646D3c44B8a28Ad7055cfCF536c05372"
+      - name: WearableDiamond
+        address: "0x052e6c114a166B0e91C2340370d72D4C33752B4b"
+      - name: FAKEGotchisCardDiamond
+        address: "0xe46B8902dAD841476d9Fee081F1d62aE317206A9"
+      - name: FAKEGotchisNFTDiamond
+        address: "0xAb59CA4A16925b0a4BaC5026C94bEB20A29Df479"
 unordered_multichain_mode: false
+field_selection:
+  transaction_fields:
+    - hash

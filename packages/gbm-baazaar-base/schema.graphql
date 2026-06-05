@@ -1,0 +1,227 @@
+# --- GBM (merged from baazaar-gbm-subgraph) ---
+
+type GbmUser {
+  id: ID!
+  bids: BigInt!
+  bidAmount: BigInt!
+  outbids: BigInt!
+  payouts: BigInt!
+  payoutAmount: BigInt!
+  wins: BigInt!
+  totalAuctionsCreated: BigInt!
+}
+
+type Auction {
+  id: ID!
+  orderId: BigInt!
+  auctionType: String!
+  tokenId: BigInt!
+  contractAddress: Bytes!
+  highestBid: BigInt!
+  highestBidder: Bytes!
+  lastBidTime: BigInt!
+  totalBids: BigInt!
+  claimed: Boolean!
+  hammerTimeDuration: BigInt
+  bidDecimals: BigInt!
+  stepMin: BigInt!
+  incMin: BigInt!
+  incMax: BigInt!
+  bidMultiplier: BigInt!
+  dueIncentives: BigInt
+  seller: Bytes
+  createdAt: BigInt
+  startsAt: BigInt
+  endsAt: BigInt
+  endsAtOriginal: BigInt
+  claimAt: BigInt
+  quantity: BigInt
+  presetId: Int
+  cancelled: Boolean
+  totalBidsVolume: BigInt!
+  cancellationPeriodDuration: BigInt!
+  cancellationTime: BigInt
+  auctionDebt: BigInt!
+  sellerProceeds: BigInt!
+  platformFees: BigInt!
+  gbmFees: BigInt!
+  royaltyFees: BigInt!
+  category: Int!
+  buyNowPrice: BigInt!
+  startBidPrice: BigInt!
+  startBidFeePercent: BigInt!
+  isBought: Boolean!
+}
+
+type Bid {
+  id: ID!
+  tokenId: BigInt
+  auctionID: BigInt
+  auctionOrderId: BigInt
+  bidder: Bytes
+  amount: BigInt
+  outbid: Boolean
+  bidTime: BigInt
+  previousBid: BigInt
+  previousBidder: Bytes
+  auctionTimeLeft: BigInt
+  auctionEndTime: BigInt
+  contractAddress: Bytes
+  claimed: Boolean
+  bidType: String
+  bidMultiplier: BigInt!
+  auctionCreatedAt: BigInt!
+  category: Int!
+  presetId: Int
+}
+
+type Incentive {
+  id: ID!
+  auctionOrderId: BigInt!
+  tokenId: BigInt!
+  contractAddress: Bytes!
+  earner: Bytes!
+  amount: BigInt!
+  auctionID: BigInt!
+  receiveTime: BigInt!
+  incentiveType: String!
+  bidMultiplier: BigInt!
+  auctionCreatedAt: BigInt!
+  presetId: Int
+}
+
+type GbmContract {
+  id: ID!
+  biddingAllowed: Boolean!
+}
+
+type GbmStatistic {
+  id: ID!
+  erc1155Auctions: BigInt!
+  erc721Auctions: BigInt!
+  totalBidsVolume: BigInt!
+  totalSalesVolume: BigInt!
+}
+
+# Immutable GBM event logs (port of baazaar-gbm-subgraph Event entities; for analytics)
+
+type GbmTransaction {
+  id: ID!
+  timestamp: BigInt!
+  blockNumber: BigInt!
+  txHash: Bytes!
+}
+
+type Auction_BidPlaced {
+  id: ID!
+  emitter_id: String!
+  transaction_id: String!
+  timestamp: BigInt!
+  auctionId: BigInt!
+  bidder: Bytes!
+  bidAmount: BigInt!
+}
+
+type Auction_BidRemoved {
+  id: ID!
+  emitter_id: String!
+  transaction_id: String!
+  timestamp: BigInt!
+  auctionId: BigInt!
+  bidder: Bytes!
+  bidAmount: BigInt!
+}
+
+type Auction_EndTimeUpdated {
+  id: ID!
+  emitter_id: String!
+  transaction_id: String!
+  timestamp: BigInt!
+  auctionId: BigInt!
+  endTime: BigInt!
+}
+
+type Auction_IncentivePaid {
+  id: ID!
+  emitter_id: String!
+  transaction_id: String!
+  timestamp: BigInt!
+  auctionId: BigInt!
+  earner: Bytes!
+  incentiveAmount: BigInt!
+}
+
+type Auction_Initialized {
+  id: ID!
+  emitter_id: String!
+  transaction_id: String!
+  timestamp: BigInt!
+  auctionId: BigInt!
+  tokenID: BigInt!
+  tokenAmount: BigInt!
+  contractAddress: Bytes!
+  tokenKind: Bytes!
+  presetID: BigInt!
+}
+
+type Auction_StartTimeUpdated {
+  id: ID!
+  emitter_id: String!
+  transaction_id: String!
+  timestamp: BigInt!
+  auctionId: BigInt!
+  startTime: BigInt!
+  endTime: BigInt!
+}
+
+type Auction_ItemClaimed {
+  id: ID!
+  emitter_id: String!
+  transaction_id: String!
+  timestamp: BigInt!
+  auctionId: BigInt!
+}
+
+type Auction_BuyItNowUpdated {
+  id: ID!
+  emitter_id: String!
+  transaction_id: String!
+  timestamp: BigInt!
+  auctionId: BigInt!
+  buyNowPrice: BigInt!
+}
+
+type Auction_StartingPriceUpdated {
+  id: ID!
+  emitter_id: String!
+  transaction_id: String!
+  timestamp: BigInt!
+  auctionId: BigInt!
+  startBidPrice: BigInt!
+}
+
+type Auction_BoughtNow {
+  id: ID!
+  emitter_id: String!
+  transaction_id: String!
+  timestamp: BigInt!
+  auctionId: BigInt!
+}
+
+type AuctionCancelled {
+  id: ID!
+  emitter_id: String!
+  transaction_id: String!
+  timestamp: BigInt!
+  auctionId: BigInt!
+  tokenId: BigInt!
+}
+
+type Contract_BiddingAllowed {
+  id: ID!
+  emitter_id: String!
+  transaction_id: String!
+  timestamp: BigInt!
+  contract: Bytes
+  biddingAllowed: Boolean
+}

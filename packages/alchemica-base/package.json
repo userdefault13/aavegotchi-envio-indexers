@@ -1,0 +1,27 @@
+{
+  "name": "@aavegotchi/alchemica-base-indexer",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "clean": "tsc --clean",
+    "build": "tsc --build",
+    "watch": "tsc --watch",
+    "codegen": "envio codegen",
+    "dev": "envio dev",
+    "start": "envio start"
+  },
+  "devDependencies": {
+    "@types/node": "20.8.8",
+    "typescript": "5.2.2"
+  },
+  "dependencies": {
+    "envio": "2.26.0-rc.2",
+    "ethers": "^6.8.0"
+  },
+  "optionalDependencies": {
+    "generated": "./generated"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

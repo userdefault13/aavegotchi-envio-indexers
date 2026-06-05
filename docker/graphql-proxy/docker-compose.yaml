@@ -7,8 +7,14 @@ services:
       - "${PROXY_PORT:-8787}:8787"
     environment:
       PROXY_PORT: 8787
-      CORE_HASURA_URL: ${CORE_HASURA_URL:-http://host.docker.internal:8080/v1/graphql}
-      GV_HASURA_URL: ${GV_HASURA_URL:-http://host.docker.internal:8081/v1/graphql}
+      # Always use host.docker.internal inside the container (127.0.0.1 in .env is for npm run dev:proxy)
+      CORE_HASURA_URL: http://host.docker.internal:${CORE_HASURA_PORT:-8082}/v1/graphql
+      GV_HASURA_URL: http://host.docker.internal:${GV_HASURA_PORT:-8081}/v1/graphql
+      SVG_HASURA_URL: http://host.docker.internal:${SVG_HASURA_PORT:-8084}/v1/graphql
+      PORTAL_HASURA_URL: http://host.docker.internal:${PORTAL_HASURA_PORT:-8085}/v1/graphql
+      ALCHEMICA_HASURA_URL: http://host.docker.internal:${ALCHEMICA_HASURA_PORT:-8086}/v1/graphql
+      STAKING_HASURA_URL: http://host.docker.internal:${STAKING_HASURA_PORT:-8087}/v1/graphql
+      GBM_HASURA_URL: http://host.docker.internal:${GBM_HASURA_PORT:-8088}/v1/graphql
       HASURA_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET:-testing}
     extra_hosts:
       - "host.docker.internal:host-gateway"

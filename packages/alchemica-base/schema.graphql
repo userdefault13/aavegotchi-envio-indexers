@@ -1,0 +1,21 @@
+type AlchemicaAccount {
+  id: ID!
+  erc20Balances: [ERC20Balance!]! @derivedFrom(field: "account_id")
+}
+
+type ERC20Contract {
+  id: ID!
+  symbol: String!
+  name: String!
+  decimals: Int!
+  burned: ERC20Balance!
+  totalSupply: ERC20Balance!
+}
+
+type ERC20Balance {
+  id: ID!
+  account_id: String
+  contract_id: String!
+  value: String!
+  valueExact: BigInt!
+}

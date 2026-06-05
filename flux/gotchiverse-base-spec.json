@@ -3,7 +3,7 @@
   "name": "gotchiversebase",
   "description": "Gotchiverse Base Envio indexer (Postgres + Hasura + Envio)",
   "owner": "REPLACE_WITH_FLUX_ZELID",
-  "instances": 3,
+  "instances": 1,
   "staticip": false,
   "enterprise": "",
   "contacts": [],
@@ -32,7 +32,7 @@
       "name": "hasura",
       "description": "Hasura GraphQL for gotchiverse indexer",
       "repotag": "hasura/graphql-engine:v2.43.0",
-      "ports": [8081],
+      "ports": [8080],
       "containerPorts": [8080],
       "domains": [""],
       "environmentParameters": [
@@ -43,7 +43,7 @@
         "HASURA_GRAPHQL_UNAUTHORIZED_ROLE=public"
       ],
       "commands": [],
-      "containerData": "",
+      "containerData": "/tmp",
       "cpu": 1,
       "ram": 2048,
       "hdd": 2,
@@ -68,10 +68,11 @@
         "HASURA_SERVICE_HOST=hasura",
         "HASURA_SERVICE_PORT=8080",
         "TUI_OFF=true",
-        "LOG_LEVEL=info"
+        "LOG_LEVEL=info",
+        "ALCHEMY_API_KEY=REPLACE_ALCHEMY_KEY"
       ],
       "commands": [],
-      "containerData": "",
+      "containerData": "/tmp",
       "cpu": 4,
       "ram": 8192,
       "hdd": 5,

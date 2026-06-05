@@ -1,10 +1,10 @@
 import type { HandlerContext } from "generated";
 import type { Parcel, ParcelAccessRight } from "generated";
 import { BIGINT_ZERO, ZERO_REMAINING_ALCHEMICA } from "./constants";
-import { getParcelInfoEffect } from "./contractEffects";
+import { fetchParcelInfo } from "./contractEffects";
 import { parcelAccessRightId } from "./ids";
 
-type ParcelContext = Pick<HandlerContext, "Parcel" | "ParcelAccessRight" | "effect">;
+type ParcelContext = Pick<HandlerContext, "Parcel" | "ParcelAccessRight">;
 
 function emptyParcel(id: string, realmId: bigint): Parcel {
   return {
@@ -36,10 +36,7 @@ export async function updateParcelInfo(
   blockNumber: bigint,
 ): Promise<Parcel> {
   const tokenId = BigInt(parcel.id);
-  const parcelInfo = await context.effect(getParcelInfoEffect, {
-    tokenId,
-    blockNumber,
-  });
+  const parcelInfo = await fetchParcelInfo(tokenId, blockNumber);
 
   if (!parcelInfo) {
     return parcel;

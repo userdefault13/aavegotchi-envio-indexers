@@ -10,18 +10,26 @@ services:
       POSTGRES_PASSWORD: ${ENVIO_PG_PASSWORD:-testing}
       POSTGRES_USER: ${ENVIO_PG_USER:-postgres}
       POSTGRES_DB: ${CORE_PG_DATABASE:-envio-core}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${ENVIO_PG_USER:-postgres} -d ${CORE_PG_DATABASE:-envio-core}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     networks:
       - core-indexer-network
 
   graphql-engine:
     image: hasura/graphql-engine:v2.43.0
     ports:
-      - "${CORE_HASURA_PORT:-8080}:8080"
+      - "${CORE_HASURA_PORT:-8082}:8080"
     depends_on:
-      - envio-postgres
+      envio-postgres:
+        condition: service_healthy
     restart: always
     environment:
-      HASURA_GRAPHQL_DATABASE_URL: postgres://${ENVIO_PG_USER:-postgres}:${ENVIO_PG_PASSWORD:-testing}@envio-postgres:5432/${CORE_PG_DATABASE:-envio-core}
+      # Set CORE_HASURA_DATABASE_URL in .env if ENVIO_PG_PASSWORD contains / @ # etc.
+      HASURA_GRAPHQL_DATABASE_URL: ${CORE_HASURA_DATABASE_URL:-postgres://${ENVIO_PG_USER:-postgres}:${ENVIO_PG_PASSWORD:-testing}@envio-postgres:5432/${CORE_PG_DATABASE:-envio-core}}
       HASURA_GRAPHQL_ENABLE_CONSOLE: ${HASURA_GRAPHQL_ENABLE_CONSOLE:-true}
       HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET:-testing}
       HASURA_GRAPHQL_STRINGIFY_NUMERIC_TYPES: "true"
@@ -37,8 +45,8 @@ services:
 
   envio-indexer:
     build:
-      context: ../../packages/core-base
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: packages/core-base/Dockerfile
       args:
         ENVIO_API_TOKEN: ${ENVIO_API_TOKEN:-development}
     depends_on:
@@ -58,6 +66,8 @@ services:
       CONFIG_FILE: config.yaml
       LOG_LEVEL: ${LOG_LEVEL:-info}
       TUI_OFF: ${TUI_OFF:-true}
+      ALCHEMY_API_KEY: ${ALCHEMY_API_KEY:-}
+      BASE_MAINNET_RPC: ${BASE_MAINNET_RPC:-}
       HASURA_GRAPHQL_ENDPOINT: http://graphql-engine:8080/v1/metadata
       HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET:-testing}
       HASURA_SERVICE_HOST: graphql-engine

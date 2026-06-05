@@ -17,7 +17,6 @@ import {
   getOrCreateParcelAccessRight,
   removeParcelInstallation,
   removeParcelTile,
-  updateParcelInfo,
 } from "./utils/parcel";
 import { getOrCreateTile, getOrCreateTileType } from "./utils/tile";
 
@@ -49,17 +48,6 @@ RealmDiamond.Transfer.handler(async ({ event, context }) => {
     ...parcel,
     owner: toAddressId(event.params._to),
   });
-});
-
-RealmDiamond.ResyncParcel.handler(async ({ event, context }) => {
-  const blockNumber = blockNumberFrom(event.block);
-  const parcel = await getOrCreateParcel(
-    context,
-    event.params._tokenId,
-    blockNumber,
-  );
-
-  context.Parcel.set(await updateParcelInfo(context, parcel, blockNumber));
 });
 
 RealmDiamond.SurveyParcel.handler(async ({ event, context }) => {

@@ -5,9 +5,9 @@ import {
   ZERO_ADDRESS,
 } from "../constants";
 import {
-  getAavegotchiEffect,
-  getERC1155ListingEffect,
-  getERC721ListingEffect,
+  fetchAavegotchi,
+  fetchERC1155Listing,
+  fetchERC721Listing,
   type AavegotchiOnChain,
   type ERC1155ListingOnChain,
   type ERC721ListingOnChain,
@@ -139,7 +139,7 @@ function defaultERC721Listing(id: string): ERC721ListingEntity {
     tokenId: BIGINT_ZERO,
     seller: ZERO_ADDRESS,
     priceInWei: BIGINT_ZERO,
-    cancelled: undefined,
+    cancelled: false,
     buyer: undefined,
     recipient: undefined,
     timePurchased: undefined,
@@ -354,10 +354,7 @@ export async function updateAavegotchiInfo(
   tokenId: bigint,
   block: BlockRef,
 ): Promise<AavegotchiEntity> {
-  const info = await context.effect(getAavegotchiEffect, {
-    tokenId,
-    blockNumber: block.number,
-  });
+  const info = await fetchAavegotchi(tokenId, block.number);
   if (!info) return gotchi;
 
   const owner = await getOrCreateUser(context, info.owner);
@@ -448,12 +445,7 @@ export async function updateERC721ListingInfo(
   listingId: bigint,
   block: BlockRef,
 ): Promise<ERC721ListingEntity> {
-  const info = await context.effect(
-    getERC721ListingEffect,
-    {
-    listingId,
-    blockNumber: block.number,
-  });
+  const info = await fetchERC721Listing(listingId, block.number);
   if (!info) return listing;
 
   let updated = {
@@ -512,12 +504,7 @@ export async function updateERC1155ListingInfo(
   listingId: bigint,
   block: BlockRef,
 ): Promise<ERC1155ListingEntity> {
-  const info = await context.effect(
-    getERC1155ListingEffect,
-    {
-    listingId,
-    blockNumber: block.number,
-  });
+  const info = await fetchERC1155Listing(listingId, block.number);
   if (!info) return listing;
 
   let updated = {

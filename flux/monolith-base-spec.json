@@ -1,0 +1,102 @@
+{
+  "version": 8,
+  "name": "aavegotchimonolithbase",
+  "description": "Aavegotchi Base monolith indexer (Postgres + Hasura + Envio + GraphQL proxy)",
+  "owner": "REPLACE_WITH_FLUX_ZELID",
+  "instances": 1,
+  "staticip": false,
+  "enterprise": "",
+  "contacts": [],
+  "geolocation": [],
+  "compose": [
+    {
+      "name": "postgres",
+      "description": "Monolith indexer Postgres",
+      "repotag": "postgres:17.5",
+      "ports": [],
+      "containerPorts": [5432],
+      "domains": [""],
+      "environmentParameters": [
+        "POSTGRES_USER=postgres",
+        "POSTGRES_DB=envio-monolith",
+        "POSTGRES_PASSWORD=REPLACE_PG_PASSWORD"
+      ],
+      "commands": [],
+      "containerData": "/var/lib/postgresql/data",
+      "cpu": 4,
+      "ram": 8192,
+      "hdd": 200,
+      "tiered": false
+    },
+    {
+      "name": "hasura",
+      "description": "Hasura GraphQL for monolith indexer",
+      "repotag": "hasura/graphql-engine:v2.43.0",
+      "ports": [],
+      "containerPorts": [8080],
+      "domains": [""],
+      "environmentParameters": [
+        "HASURA_GRAPHQL_DATABASE_URL=postgres://postgres:REPLACE_PG_PASSWORD@postgres:5432/envio-monolith",
+        "HASURA_GRAPHQL_ENABLE_CONSOLE=false",
+        "HASURA_GRAPHQL_ADMIN_SECRET=REPLACE_HASURA_SECRET",
+        "HASURA_GRAPHQL_STRINGIFY_NUMERIC_TYPES=true",
+        "HASURA_GRAPHQL_UNAUTHORIZED_ROLE=public"
+      ],
+      "commands": [],
+      "containerData": "/tmp",
+      "cpu": 2,
+      "ram": 4096,
+      "hdd": 2,
+      "tiered": false
+    },
+    {
+      "name": "indexer",
+      "description": "Envio monolith-base indexer",
+      "repotag": "userdefault13/aavegotchi-monolith-envio:latest",
+      "ports": [],
+      "containerPorts": [9900],
+      "domains": [""],
+      "environmentParameters": [
+        "ENVIO_API_TOKEN=REPLACE_ENVIO_TOKEN",
+        "ENVIO_PG_HOST=postgres",
+        "ENVIO_PG_PORT=5432",
+        "ENVIO_PG_USER=postgres",
+        "ENVIO_PG_PASSWORD=REPLACE_PG_PASSWORD",
+        "ENVIO_PG_DATABASE=envio-monolith",
+        "HASURA_GRAPHQL_ENDPOINT=http://hasura:8080/v1/metadata",
+        "HASURA_GRAPHQL_ADMIN_SECRET=REPLACE_HASURA_SECRET",
+        "HASURA_SERVICE_HOST=hasura",
+        "HASURA_SERVICE_PORT=8080",
+        "TUI_OFF=true",
+        "LOG_LEVEL=info",
+        "ALCHEMY_API_KEY=REPLACE_ALCHEMY_KEY",
+        "BASE_MAINNET_RPC=REPLACE_BASE_RPC"
+      ],
+      "commands": [],
+      "containerData": "/tmp",
+      "cpu": 4,
+      "ram": 8192,
+      "hdd": 5,
+      "tiered": false
+    },
+    {
+      "name": "proxy",
+      "description": "GraphQL subgraph-compat proxy (public :8787)",
+      "repotag": "userdefault13/aavegotchi-graphql-proxy:latest",
+      "ports": [8787],
+      "containerPorts": [8787],
+      "domains": [""],
+      "environmentParameters": [
+        "PROXY_PORT=8787",
+        "HASURA_URL=http://fluxhasura_aavegotchimonolithbase:8080/v1/graphql",
+        "HASURA_ADMIN_SECRET=REPLACE_HASURA_SECRET"
+      ],
+      "commands": [],
+      "containerData": "/tmp",
+      "cpu": 1,
+      "ram": 1024,
+      "hdd": 1,
+      "tiered": false
+    }
+  ]
+}

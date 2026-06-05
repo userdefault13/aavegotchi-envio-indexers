@@ -323,17 +323,6 @@ AavegotchiDiamond.ERC721ListingPriceUpdate.handler(async ({ event, context }) =>
   });
 });
 
-AavegotchiDiamond.ERC721ListingWhitelistSet.handler(async ({ event, context }) => {
-  const listing = await getOrCreateERC721Listing(
-    context,
-    event.params.listingId.toString(),
-  );
-  context.ERC721Listing.set({
-    ...listing,
-    whitelist_id: event.params.whitelistId.toString(),
-  });
-});
-
 AavegotchiDiamond.ERC721ExecutedToRecipient.handler(async ({ event, context }) => {
   const block = blockRef(event);
   let listing = await getOrCreateERC721Listing(

@@ -1,0 +1,14 @@
+.git
+.github
+node_modules
+**/node_modules
+**/generated
+**/build
+.env
+.env.*
+!.env.example
+docs
+flux
+loadtests
+*.md
+!packages/**/README.md

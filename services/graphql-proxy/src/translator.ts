@@ -10,16 +10,68 @@ import {
 
 /** The Graph root field → Hasura table (Envio entity) */
 const ROOT_FIELD_MAP: Record<string, string> = {
+  aavegotchi: "Aavegotchi",
+  aavegotchis: "Aavegotchi",
+  aavegotchiOption: "AavegotchiOption",
+  aavegotchiOptions: "AavegotchiOption",
+  claimedToken: "ClaimedToken",
+  claimedTokens: "ClaimedToken",
+  equippedWearableOwner: "EquippedWearableOwner",
+  equippedWearableOwners: "EquippedWearableOwner",
   erc721Listings: "ERC721Listing",
   erc721Listing: "ERC721Listing",
   erc1155Listings: "ERC1155Listing",
   erc1155Listing: "ERC1155Listing",
+  erc1155Purchase: "ERC1155Purchase",
+  erc1155Purchases: "ERC1155Purchase",
+  erc721BuyOrder: "ERC721BuyOrder",
+  erc721BuyOrders: "ERC721BuyOrder",
+  erc1155BuyOrder: "ERC1155BuyOrder",
+  erc1155BuyOrders: "ERC1155BuyOrder",
+  erc1155BuyOrderExecution: "ERC1155BuyOrderExecution",
+  erc1155BuyOrderExecutions: "ERC1155BuyOrderExecution",
   gotchiLendings: "GotchiLending",
   gotchiLending: "GotchiLending",
+  itemType: "ItemType",
+  itemTypes: "ItemType",
+  itemTypeOwnership: "ItemTypeOwnership",
+  itemTypeOwnerships: "ItemTypeOwnership",
+  wearableSet: "WearableSet",
+  wearableSets: "WearableSet",
+  wearablesConfig: "WearablesConfig",
+  wearablesConfigs: "WearablesConfig",
   parcels: "Parcel",
   parcel: "Parcel",
-  aavegotchi: "Aavegotchi",
-  aavegotchis: "Aavegotchi",
+  portal: "Portal",
+  portals: "Portal",
+  whitelist: "Whitelist",
+  whitelists: "Whitelist",
+  fakeGotchiCardBalance: "FakeGotchiCardBalance",
+  fakeGotchiCardBalances: "FakeGotchiCardBalance",
+  fakeGotchiNFTToken: "FakeGotchiNFTToken",
+  fakeGotchiNFTTokens: "FakeGotchiNFTToken",
+  fakeGotchiNFTTransfer: "FakeGotchiNFTTransfer",
+  fakeGotchiNFTTransfers: "FakeGotchiNFTTransfer",
+  fakeGotchiStatistic: "FakeGotchiStatistic",
+  fakeGotchiStatistics: "FakeGotchiStatistic",
+  fakeGotchiHolder: "FakeGotchiHolder",
+  fakeGotchiHolders: "FakeGotchiHolder",
+  generation: "Generation",
+  generations: "Generation",
+  metadataActionLog: "MetadataActionLog",
+  metadataActionLogs: "MetadataActionLog",
+  rolesRegistry: "RolesRegistry",
+  rolesRegistries: "RolesRegistry",
+  role: "Role",
+  roles: "Role",
+  roleAssignment: "RoleAssignment",
+  roleAssignments: "RoleAssignment",
+  tokenCommitment: "TokenCommitment",
+  tokenCommitments: "TokenCommitment",
+  statistic: "Statistic",
+  statistics: "Statistic",
+  users: "User",
+  user: "User",
   installations: "Installation",
   installation: "Installation",
   tiles: "Tile",
@@ -30,9 +82,103 @@ const ROOT_FIELD_MAP: Record<string, string> = {
   tileType: "TileType",
   parcelAccessRights: "ParcelAccessRight",
   parcelAccessRight: "ParcelAccessRight",
-  users: "User",
-  user: "User",
 };
+
+/** Goldsky socket-bridge-base subgraph root fields → monolith Hasura tables */
+const SOCKET_ROOT_FIELD_MAP: Record<string, string> = {
+  tokenContract: "TokenContract",
+  tokenContracts: "TokenContract",
+  bridgeTransfer: "BridgeTransfer",
+  bridgeTransfers: "BridgeTransfer",
+};
+
+/** Goldsky alchemica-base subgraph root fields → monolith Hasura tables */
+const ALCHEMICA_ROOT_FIELD_MAP: Record<string, string> = {
+  account: "AlchemicaAccount",
+  accounts: "AlchemicaAccount",
+  erc20Contract: "ERC20Contract",
+  erc20Contracts: "ERC20Contract",
+  erc20Balance: "ERC20Balance",
+  erc20Balances: "ERC20Balance",
+};
+
+/** GLTR staking subgraph root fields → monolith Hasura tables */
+const STAKING_ROOT_FIELD_MAP: Record<string, string> = {
+  pool: "StakingPool",
+  pools: "StakingPool",
+  poolPosition: "PoolPosition",
+  poolPositions: "PoolPosition",
+  user: "StakingUser",
+  users: "StakingUser",
+  poolStat: "StakingPoolStat",
+  poolStats: "StakingPoolStat",
+  deposit: "StakingDeposit",
+  deposits: "StakingDeposit",
+  withdraw: "StakingWithdraw",
+  withdraws: "StakingWithdraw",
+  harvest: "StakingHarvest",
+  harvests: "StakingHarvest",
+  emergencyWithdraw: "StakingEmergencyWithdraw",
+  emergencyWithdraws: "StakingEmergencyWithdraw",
+};
+
+/** Goldsky gbm-baazaar subgraph root fields → monolith Hasura tables */
+const GBM_ROOT_FIELD_MAP: Record<string, string> = {
+  auction: "Auction",
+  auctions: "Auction",
+  bid: "Bid",
+  bids: "Bid",
+  incentive: "Incentive",
+  incentives: "Incentive",
+  user: "GbmUser",
+  users: "GbmUser",
+  contract: "GbmContract",
+  contracts: "GbmContract",
+  statistic: "GbmStatistic",
+  statistics: "GbmStatistic",
+  transaction: "GbmTransaction",
+  transactions: "GbmTransaction",
+  auction_BidPlaced: "Auction_BidPlaced",
+  auction_BidPlaceds: "Auction_BidPlaced",
+  auction_BidRemoved: "Auction_BidRemoved",
+  auction_BidRemoveds: "Auction_BidRemoved",
+  auction_EndTimeUpdated: "Auction_EndTimeUpdated",
+  auction_EndTimeUpdateds: "Auction_EndTimeUpdated",
+  auction_IncentivePaid: "Auction_IncentivePaid",
+  auction_IncentivePaids: "Auction_IncentivePaid",
+  auction_Initialized: "Auction_Initialized",
+  auction_Initializeds: "Auction_Initialized",
+  auction_StartTimeUpdated: "Auction_StartTimeUpdated",
+  auction_StartTimeUpdateds: "Auction_StartTimeUpdated",
+  auction_ItemClaimed: "Auction_ItemClaimed",
+  auction_ItemClaimeds: "Auction_ItemClaimed",
+  auction_BuyItNowUpdated: "Auction_BuyItNowUpdated",
+  auction_BuyItNowUpdateds: "Auction_BuyItNowUpdated",
+  auction_StartingPriceUpdated: "Auction_StartingPriceUpdated",
+  auction_StartingPriceUpdateds: "Auction_StartingPriceUpdated",
+  auction_BoughtNow: "Auction_BoughtNow",
+  auction_BoughtNows: "Auction_BoughtNow",
+  auctionCancelled: "AuctionCancelled",
+  auctionCancelleds: "AuctionCancelled",
+  contract_BiddingAllowed: "Contract_BiddingAllowed",
+  contract_BiddingAlloweds: "Contract_BiddingAllowed",
+};
+
+export function rootFieldMapForSubgraphPath(path: string): Record<string, string> {
+  if (path.includes("gltr-staking") || path.includes("gltr_staking")) {
+    return { ...ROOT_FIELD_MAP, ...STAKING_ROOT_FIELD_MAP };
+  }
+  if (path.includes("socket-bridge") || path.includes("socket_bridge")) {
+    return { ...ROOT_FIELD_MAP, ...SOCKET_ROOT_FIELD_MAP };
+  }
+  if (path.includes("alchemica")) {
+    return { ...ROOT_FIELD_MAP, ...ALCHEMICA_ROOT_FIELD_MAP };
+  }
+  if (path.includes("gbm") || path.includes("baazaar")) {
+    return { ...ROOT_FIELD_MAP, ...GBM_ROOT_FIELD_MAP };
+  }
+  return ROOT_FIELD_MAP;
+}
 
 const ORDER_SUFFIX = /_gt$|_lt$|_gte$|_lte$|_in$|_not$|_contains$|_not_contains$/;
 
@@ -89,19 +235,211 @@ function transformWhere(where: Record<string, unknown> | undefined): Record<stri
   return result;
 }
 
-function selectionSetToHasuraFields(selectionSet: SelectionSetNode | undefined): string {
+const GBM_HASURA_FIELD_ALIAS: Record<string, string> = {
+  type: "auctionType",
+};
+
+/** Goldsky alchemica subgraph field names → Hasura / Envio entity fields */
+const ALCHEMICA_HASURA_FIELD_ALIAS: Record<string, string> = {
+  ERC20balances: "erc20Balances",
+};
+
+const SOCKET_HASURA_FIELD_ALIAS: Record<string, string> = {
+  type: "txType",
+};
+
+const SOCKET_TOKEN_HASURA_FIELD_ALIAS: Record<string, string> = {
+  type: "tokenType",
+};
+
+function selectionSetToHasuraFields(
+  selectionSet: SelectionSetNode | undefined,
+  useGbmAliases: boolean,
+  useAlchemicaAliases: boolean,
+  useSocketAliases: boolean,
+  useSocketTokenAliases: boolean,
+  useStakingAliases: boolean,
+): string {
   if (!selectionSet) return "id";
   const parts: string[] = [];
   for (const sel of selectionSet.selections) {
     if (sel.kind !== Kind.FIELD) continue;
     const field = sel as FieldNode;
+    let hasuraName = field.name.value;
+    if (useGbmAliases && GBM_HASURA_FIELD_ALIAS[field.name.value]) {
+      hasuraName = GBM_HASURA_FIELD_ALIAS[field.name.value];
+    } else if (useGbmAliases && field.name.value === "emitter") {
+      hasuraName = "GbmUser";
+    } else if (useGbmAliases && field.name.value === "transaction") {
+      hasuraName = "GbmTransaction";
+    } else if (
+      useAlchemicaAliases &&
+      ALCHEMICA_HASURA_FIELD_ALIAS[field.name.value]
+    ) {
+      hasuraName = ALCHEMICA_HASURA_FIELD_ALIAS[field.name.value];
+    } else if (useAlchemicaAliases && field.name.value === "account") {
+      hasuraName = "account_id";
+    } else if (useAlchemicaAliases && field.name.value === "contract") {
+      hasuraName = "contract_id";
+    } else if (
+      useSocketAliases &&
+      SOCKET_HASURA_FIELD_ALIAS[field.name.value]
+    ) {
+      hasuraName = SOCKET_HASURA_FIELD_ALIAS[field.name.value];
+    } else if (
+      useSocketTokenAliases &&
+      SOCKET_TOKEN_HASURA_FIELD_ALIAS[field.name.value]
+    ) {
+      hasuraName = SOCKET_TOKEN_HASURA_FIELD_ALIAS[field.name.value];
+    } else if (useSocketAliases && field.name.value === "tokenContract") {
+      hasuraName = "tokenContract_id";
+    } else if (useStakingAliases && field.name.value === "user") {
+      hasuraName = "user_id";
+    } else if (useStakingAliases && field.name.value === "pool") {
+      hasuraName = "pool_id";
+    } else if (useStakingAliases && field.name.value === "stats") {
+      hasuraName = "StakingPoolStat";
+    }
+
+    const flattenToFkScalar =
+      (useAlchemicaAliases &&
+        (field.name.value === "account" || field.name.value === "contract")) ||
+      (useSocketAliases && field.name.value === "tokenContract") ||
+      (useStakingAliases && (field.name.value === "user" || field.name.value === "pool"));
+
+    if (flattenToFkScalar) {
+      parts.push(hasuraName);
+      continue;
+    }
+
     if (field.selectionSet) {
-      parts.push(`${field.name.value} { ${selectionSetToHasuraFields(field.selectionSet)} }`);
+      let nestedSocket = useSocketAliases;
+      let nestedSocketToken = useSocketTokenAliases;
+      let nestedStaking = useStakingAliases;
+      let nestedAlchemica = useAlchemicaAliases;
+      if (useStakingAliases && field.name.value === "stats") {
+        nestedStaking = false;
+      }
+      parts.push(
+        `${hasuraName} { ${selectionSetToHasuraFields(field.selectionSet, useGbmAliases, nestedAlchemica, nestedSocket, nestedSocketToken, nestedStaking)} }`,
+      );
     } else {
-      parts.push(field.name.value);
+      parts.push(hasuraName);
     }
   }
   return parts.join("\n        ");
+}
+
+/** Map monolith GLTR staking entity fields back to subgraph API names. */
+export function mapStakingRowsForSubgraph(rows: unknown): unknown {
+  if (Array.isArray(rows)) {
+    return rows.map(mapStakingRowsForSubgraph);
+  }
+  if (rows && typeof rows === "object") {
+    const o = { ...(rows as Record<string, unknown>) };
+    if ("StakingUser" in o) {
+      o.user = mapStakingRowsForSubgraph(o.StakingUser);
+      delete o.StakingUser;
+    }
+    if ("StakingPool" in o) {
+      o.pool = mapStakingRowsForSubgraph(o.StakingPool);
+      delete o.StakingPool;
+    }
+    if ("StakingPoolStat" in o) {
+      o.stats = mapStakingRowsForSubgraph(o.StakingPoolStat);
+      delete o.StakingPoolStat;
+    }
+    for (const [k, v] of Object.entries(o)) {
+      if (v && typeof v === "object") {
+        o[k] = mapStakingRowsForSubgraph(v);
+      }
+    }
+    return o;
+  }
+  return rows;
+}
+
+/** Map monolith socket entity fields back to Goldsky subgraph names. */
+export function mapSocketRowsForSubgraph(rows: unknown): unknown {
+  if (Array.isArray(rows)) {
+    return rows.map(mapSocketRowsForSubgraph);
+  }
+  if (rows && typeof rows === "object") {
+    const o = { ...(rows as Record<string, unknown>) };
+    if ("txType" in o) {
+      o.type = o.txType;
+    } else if ("tokenType" in o) {
+      o.type = o.tokenType;
+    }
+    if ("TokenContract" in o) {
+      o.tokenContract = mapSocketRowsForSubgraph(o.TokenContract);
+      delete o.TokenContract;
+    }
+    for (const [k, v] of Object.entries(o)) {
+      if (v && typeof v === "object") {
+        o[k] = mapSocketRowsForSubgraph(v);
+      }
+    }
+    return o;
+  }
+  return rows;
+}
+
+/** Map monolith alchemica rows for subgraph clients (nested account/contract enriched separately). */
+export function mapAlchemicaRowsForSubgraph(rows: unknown): unknown {
+  if (Array.isArray(rows)) {
+    return rows.map(mapAlchemicaRowsForSubgraph);
+  }
+  if (rows && typeof rows === "object") {
+    const o = { ...(rows as Record<string, unknown>) };
+    if ("AlchemicaAccount" in o) {
+      o.account = mapAlchemicaRowsForSubgraph(o.AlchemicaAccount);
+      delete o.AlchemicaAccount;
+    }
+    if ("ERC20Contract" in o) {
+      o.contract = mapAlchemicaRowsForSubgraph(o.ERC20Contract);
+      delete o.ERC20Contract;
+    }
+    for (const [k, v] of Object.entries(o)) {
+      if (v && typeof v === "object") {
+        o[k] = mapAlchemicaRowsForSubgraph(v);
+      }
+    }
+    return o;
+  }
+  return rows;
+}
+
+/** Map monolith GBM entity fields back to Goldsky subgraph names. */
+export function mapGbmRowsForSubgraph(rows: unknown): unknown {
+  if (Array.isArray(rows)) {
+    return rows.map(mapGbmRowsForSubgraph);
+  }
+  if (rows && typeof rows === "object") {
+    const o = { ...(rows as Record<string, unknown>) };
+    if ("auctionType" in o) {
+      o.type = o.auctionType;
+    } else if ("bidType" in o) {
+      o.type = o.bidType;
+    } else if ("incentiveType" in o) {
+      o.type = o.incentiveType;
+    }
+    if ("GbmUser" in o) {
+      o.emitter = mapGbmRowsForSubgraph(o.GbmUser);
+      delete o.GbmUser;
+    }
+    if ("GbmTransaction" in o) {
+      o.transaction = mapGbmRowsForSubgraph(o.GbmTransaction);
+      delete o.GbmTransaction;
+    }
+    for (const [k, v] of Object.entries(o)) {
+      if (v && typeof v === "object") {
+        o[k] = mapGbmRowsForSubgraph(v);
+      }
+    }
+    return o;
+  }
+  return rows;
 }
 
 export interface TranslateResult {
@@ -110,7 +448,11 @@ export interface TranslateResult {
   originalRootField: string;
 }
 
-export function translateSubgraphToHasura(query: string, variables: Record<string, unknown> = {}): TranslateResult {
+export function translateSubgraphToHasura(
+  query: string,
+  variables: Record<string, unknown> = {},
+  fieldMap: Record<string, string> = ROOT_FIELD_MAP,
+): TranslateResult {
   const doc: DocumentNode = parse(query);
   let rootField = "";
   let originalRootField = "";
@@ -121,7 +463,7 @@ export function translateSubgraphToHasura(query: string, variables: Record<strin
     Field(node) {
       if (!rootField && node.name.value !== "__schema" && node.name.value !== "__type" && node.name.value !== "_meta") {
         originalRootField = node.name.value;
-        rootField = ROOT_FIELD_MAP[node.name.value] ?? node.name.value;
+        rootField = fieldMap[node.name.value] ?? node.name.value;
         selectionSet = node.selectionSet ?? undefined;
         fieldArgs = {};
         for (const arg of node.arguments ?? []) {
@@ -167,7 +509,36 @@ export function translateSubgraphToHasura(query: string, variables: Record<strin
   const orderClause = orderByField ? `order_by: {${orderByField}: ${orderDir}}` : "";
   const args = [`limit: ${limit}`, `offset: ${offset}`, whereClause, orderClause].filter(Boolean).join(", ");
 
-  const fields = selectionSetToHasuraFields(selectionSet);
+  const useGbmAliases =
+    fieldMap !== ROOT_FIELD_MAP && fieldMap.statistic === "GbmStatistic";
+  const useAlchemicaAliases =
+    fieldMap !== ROOT_FIELD_MAP &&
+    (fieldMap.account === "AlchemicaAccount" ||
+      fieldMap.accounts === "AlchemicaAccount" ||
+      fieldMap.erc20Balance === "ERC20Balance" ||
+      fieldMap.erc20Balances === "ERC20Balance" ||
+      fieldMap.erc20Contract === "ERC20Contract" ||
+      fieldMap.erc20Contracts === "ERC20Contract");
+  const socketPath = fieldMap !== ROOT_FIELD_MAP && fieldMap.bridgeTransfers === "BridgeTransfer";
+  const useSocketAliases =
+    socketPath &&
+    (originalRootField === "bridgeTransfer" || originalRootField === "bridgeTransfers");
+  const useSocketTokenAliases =
+    socketPath &&
+    (originalRootField === "tokenContract" || originalRootField === "tokenContracts");
+  const useStakingAliases =
+    fieldMap !== ROOT_FIELD_MAP &&
+    (fieldMap.pools === "StakingPool" ||
+      fieldMap.poolPositions === "PoolPosition" ||
+      fieldMap.poolStats === "StakingPoolStat");
+  const fields = selectionSetToHasuraFields(
+    selectionSet,
+    useGbmAliases,
+    useAlchemicaAliases,
+    useSocketAliases,
+    useSocketTokenAliases,
+    useStakingAliases,
+  );
 
   const hasuraQuery = `query ProxyQuery {
   ${rootField}(${args}) {

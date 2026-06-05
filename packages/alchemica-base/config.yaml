@@ -1,0 +1,67 @@
+# yaml-language-server: $schema=./node_modules/envio/evm.schema.json
+name: aavegotchi-alchemica-base
+description: Gotchus Alchemica ERC-20 balances on Base (port of aavegotchi-alchemica-subgraph)
+contracts:
+  - name: AlchemicaFud
+    abi_file_path: ./abis/ERC20.json
+    handler: ./src/handlers/alchemica.ts
+    events:
+      - event: Transfer
+  - name: AlchemicaFomo
+    abi_file_path: ./abis/ERC20.json
+    handler: ./src/handlers/alchemica.ts
+    events:
+      - event: Transfer
+  - name: AlchemicaAlpha
+    abi_file_path: ./abis/ERC20.json
+    handler: ./src/handlers/alchemica.ts
+    events:
+      - event: Transfer
+  - name: AlchemicaKek
+    abi_file_path: ./abis/ERC20.json
+    handler: ./src/handlers/alchemica.ts
+    events:
+      - event: Transfer
+  - name: AlchemicaGltr
+    abi_file_path: ./abis/ERC20.json
+    handler: ./src/handlers/alchemica.ts
+    events:
+      - event: Transfer
+  - name: AlchemicaGhst
+    abi_file_path: ./abis/ERC20.json
+    handler: ./src/handlers/alchemica.ts
+    events:
+      - event: Transfer
+networks:
+  - id: 8453
+    start_block: 33201946
+    # HyperSync primary; RPC fallbacks after ~15s stall
+    rpc:
+      - url: https://mainnet.base.org
+        for: fallback
+        fallback_stall_timeout: 15000
+        query_timeout_millis: 20000
+      - url: https://base-rpc.publicnode.com
+        for: fallback
+        fallback_stall_timeout: 15000
+        query_timeout_millis: 20000
+    contracts:
+      - name: AlchemicaFud
+        address: "0x2028b4043e6722Ea164946c82fe806c4a43a0fF4"
+      - name: AlchemicaFomo
+        address: "0xA32137bfb57d2b6A9Fd2956Ba4B54741a6D54b58"
+      - name: AlchemicaAlpha
+        address: "0x15e7CaC885e3730ce6389447BC0f7AC032f31947"
+      - name: AlchemicaKek
+        address: "0xE52b9170fF4ece4C35E796Ffd74B57Dec68Ca0e5"
+      - name: AlchemicaGltr
+        address: "0x4D140CE792bEdc430498c2d219AfBC33e2992c9D"
+      - name: AlchemicaGhst
+        address: "0xcd2f22236dd9dfe2356d7c543161d4d260fd9bcb"
+unordered_multichain_mode: false
+field_selection:
+  transaction_fields:
+    - hash
+    - from
+    - to
+    - value

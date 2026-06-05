@@ -1,0 +1,43 @@
+# yaml-language-server: $schema=./node_modules/envio/evm.schema.json
+name: aavegotchi-gbm-baazaar-base
+description: GBM auctions on Base (port of aavegotchi-baazaar-gbm-subgraph)
+contracts:
+  - name: GbmContract
+    abi_file_path: ./abis/GbmContract.json
+    handler: ./src/handlers/gbm.ts
+    events:
+      - event: AuctionCancelled
+      - event: Auction_BidPlaced
+      - event: Auction_BidRemoved
+      - event: Auction_EndTimeUpdated
+      - event: Auction_IncentivePaid
+      - event: Auction_Initialized
+      - event: Auction_ItemClaimed
+      - event: Auction_StartTimeUpdated
+      - event: Contract_BiddingAllowed
+      - event: Auction_BuyItNowUpdated
+      - event: Auction_StartingPriceUpdated
+      - event: Auction_BoughtNow
+      - event: RoyaltyPaid
+networks:
+  - id: 8453
+    start_block: 33201946
+    rpc:
+      - url: https://mainnet.base.org
+        for: fallback
+        fallback_stall_timeout: 15000
+        query_timeout_millis: 20000
+      - url: https://base-rpc.publicnode.com
+        for: fallback
+        fallback_stall_timeout: 15000
+        query_timeout_millis: 20000
+    contracts:
+      - name: GbmContract
+        address: "0x80320A0000C7A6a34086E2ACAD6915Ff57FfDA31"
+unordered_multichain_mode: false
+field_selection:
+  transaction_fields:
+    - hash
+    - from
+    - to
+    - value

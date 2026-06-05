@@ -10,18 +10,19 @@ RUN npm install -g pnpm@9.7.1
 
 WORKDIR /envio-indexer
 
-COPY package.json package-lock.json* ./
+COPY scripts/ensure-base-rpc-fallbacks.mjs /opt/envio-scripts/ensure-base-rpc-fallbacks.mjs
+COPY scripts/docker-indexer-entrypoint.sh /opt/envio-scripts/docker-indexer-entrypoint.sh
+RUN chmod +x /opt/envio-scripts/docker-indexer-entrypoint.sh
+
+COPY packages/core-base/package.json packages/core-base/package-lock.json* ./
 RUN npm install
 
-COPY config.yaml schema.graphql ./
-COPY abis ./abis
+COPY packages/core-base/ ./
 
 ARG ENVIO_API_TOKEN=development
 ENV ENVIO_API_TOKEN=$ENVIO_API_TOKEN
 RUN npx envio codegen
 
-COPY . ./
-
 RUN npm run build
 
-CMD ["npx", "envio", "start"]
+ENTRYPOINT ["/opt/envio-scripts/docker-indexer-entrypoint.sh"]

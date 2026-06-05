@@ -1,0 +1,63 @@
+type StakingPool {
+  id: ID!
+  name: String!
+  lpToken: String!
+  balance: BigInt!
+}
+
+type PoolPosition {
+  id: ID!
+  user_id: String!
+  pool_id: String!
+  balance: BigInt!
+}
+
+type StakingUser {
+  id: ID!
+  gltrHarvested: BigInt!
+}
+
+type StakingPoolStat {
+  id: ID!
+  pool_id: String!
+  numberOfCurrentPositions: BigInt!
+  numberOfTotalPositions: BigInt!
+  listOfCurrentPositions: [String!]!
+  listOfTotalPositions: [String!]!
+  lpStaked: BigInt
+}
+
+type StakingDeposit {
+  id: ID!
+  timestamp: BigInt!
+  from_id: String!
+  to_id: String!
+  amount: BigInt!
+  txHash: Bytes!
+}
+
+type StakingWithdraw {
+  id: ID!
+  timestamp: BigInt!
+  from_id: String!
+  to_id: String!
+  amount: BigInt!
+  txHash: Bytes!
+}
+
+type StakingHarvest {
+  id: ID!
+  timestamp: BigInt!
+  to_id: String!
+  amount: BigInt!
+  txHash: Bytes!
+}
+
+type StakingEmergencyWithdraw {
+  id: ID!
+  timestamp: BigInt!
+  from_id: String!
+  to_id: String!
+  amount: BigInt!
+  txHash: Bytes!
+}

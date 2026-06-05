@@ -10,6 +10,12 @@ services:
       POSTGRES_PASSWORD: ${ENVIO_PG_PASSWORD:-testing}
       POSTGRES_USER: ${ENVIO_PG_USER:-postgres}
       POSTGRES_DB: ${GV_PG_DATABASE:-envio-gv}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${ENVIO_PG_USER:-postgres} -d ${GV_PG_DATABASE:-envio-gv}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
     networks:
       - gv-indexer-network
 
@@ -18,10 +24,12 @@ services:
     ports:
       - "${GV_HASURA_PORT:-8081}:8080"
     depends_on:
-      - envio-postgres
+      envio-postgres:
+        condition: service_healthy
     restart: always
     environment:
-      HASURA_GRAPHQL_DATABASE_URL: postgres://${ENVIO_PG_USER:-postgres}:${ENVIO_PG_PASSWORD:-testing}@envio-postgres:5432/${GV_PG_DATABASE:-envio-gv}
+      # Use npm run docker:gv — encodes ENVIO_PG_PASSWORD (/ @ # break raw URLs).
+      HASURA_GRAPHQL_DATABASE_URL: ${GV_HASURA_DATABASE_URL:-postgres://${ENVIO_PG_USER:-postgres}:${ENVIO_PG_PASSWORD:-testing}@envio-postgres:5432/${GV_PG_DATABASE:-envio-gv}}
       HASURA_GRAPHQL_ENABLE_CONSOLE: ${HASURA_GRAPHQL_ENABLE_CONSOLE:-true}
       HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET:-testing}
       HASURA_GRAPHQL_STRINGIFY_NUMERIC_TYPES: "true"
@@ -37,8 +45,8 @@ services:
 
   envio-indexer:
     build:
-      context: ../../packages/gotchiverse-base
-      dockerfile: Dockerfile
+      context: ../..
+      dockerfile: packages/gotchiverse-base/Dockerfile
       args:
         ENVIO_API_TOKEN: ${ENVIO_API_TOKEN:-development}
     depends_on:
@@ -58,6 +66,8 @@ services:
       CONFIG_FILE: config.yaml
       LOG_LEVEL: ${LOG_LEVEL:-info}
       TUI_OFF: ${TUI_OFF:-true}
+      ALCHEMY_API_KEY: ${ALCHEMY_API_KEY:-}
+      BASE_MAINNET_RPC: ${BASE_MAINNET_RPC:-}
       HASURA_GRAPHQL_ENDPOINT: http://graphql-engine:8080/v1/metadata
       HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET:-testing}
       HASURA_SERVICE_HOST: graphql-engine

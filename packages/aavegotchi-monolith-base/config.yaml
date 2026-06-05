@@ -1,0 +1,262 @@
+# yaml-language-server: $schema=./node_modules/envio/evm.schema.json
+name: aavegotchi-monolith-base
+description: Aavegotchi Base monolith indexer (all seven personalities incl. GLTR staking)
+contracts:
+  - name: AavegotchiDiamond
+    abi_file_path: ./abis/AavegotchiDiamond.json
+    handler: ./src/EventHandlers.ts
+    events:
+      - event: Transfer
+      - event: ClaimAavegotchi
+      - event: ERC721ListingAdd
+      - event: ERC721ExecutedListing
+      - event: ERC721ListingCancelled
+      - event: ERC721ListingRemoved
+      - event: ERC721ListingPriceUpdate
+      - event: ERC721ListingWhitelistSet
+      - event: ERC721ExecutedToRecipient
+      - event: ERC1155ListingAdd
+      - event: ERC1155ExecutedListing
+      - event: ERC1155ListingCancelled
+      - event: ERC1155ListingRemoved
+      - event: UpdateERC1155Listing
+      - event: ERC1155ListingPriceUpdate
+      - event: ERC1155ListingWhitelistSet
+      - event: ERC1155ExecutedToRecipient
+      - event: GotchiLendingAdded((uint32,address,uint32,uint96,uint32,uint8[3],address,address,uint32,address[],uint256,uint256))
+      - event: GotchiLendingExecuted((uint32,address,address,uint32,uint96,uint32,uint8[3],address,address,uint32,address[],uint256,uint256))
+      - event: GotchiLendingCancelled
+      - event: GotchiLendingClaimed((uint32,address,address,uint32,uint96,uint32,uint8[3],address,address,uint32,address[],uint256[],uint256,uint256))
+      - event: GotchiLendingEnded((uint32,address,address,uint32,uint96,uint32,uint8[3],address,address,uint32,address[],uint256,uint256))
+      - event: GotchiLendingCancel
+      - event: AddItemType
+      - event: UpdateItemType
+      - event: ItemTypeMaxQuantity
+      - event: PurchaseItemsWithGhst
+      - event: PurchaseItemsWithVouchers
+      - event: MigrateVouchers
+      - event: AddWearableSet
+      - event: UpdateWearableSet
+      - event: ItemModifiersSet
+      - event: WearableSlotPositionsSet
+      - event: UpdateItemPrice
+      - event: EquipWearables
+      - event: EquipDelegatedWearables
+      - event: WearablesConfigCreated
+      - event: WearablesConfigUpdated
+      - event: WhitelistCreated
+      - event: WhitelistUpdated
+      - event: WhitelistOwnershipTransferred
+      - event: WhitelistAccessRightSet
+      - event: ERC721BuyOrderAdded
+      - event: ERC721BuyOrderExecuted
+      - event: ERC721BuyOrderCanceled
+      - event: ERC1155BuyOrderAdd
+      - event: ERC1155BuyOrderExecute
+      - event: ERC1155BuyOrderCancel
+      - event: RoleGranted
+      - event: RoleRevoked
+      - event: TokensCommitted
+      - event: TokensReleased
+  - name: RealmDiamond
+    abi_file_path: ./abis/RealmDiamond.json
+    handler: ./src/gv/EventHandlers.ts
+    events:
+      - event: MintParcel
+      - event: Transfer
+      - event: SurveyParcel
+      - event: AlchemicaClaimed
+      - event: EquipInstallation
+      - event: UnequipInstallation
+      - event: InstallationUpgraded
+      - event: EquipTile
+      - event: UnequipTile
+      - event: ParcelAccessRightSet
+      - event: ParcelWhitelistSet
+  - name: InstallationDiamond
+    abi_file_path: ./abis/InstallationDiamond.json
+    handler: ./src/gv/EventHandlers.ts
+    events:
+      - event: MintInstallation
+      - event: MintInstallations
+      - event: AddInstallationType
+      - event: EditInstallationType
+      - event: DeprecateInstallation
+      - event: EditDeprecateTime
+      - event: UpgradeInitiated
+      - event: URI
+  - name: TileDiamond
+    abi_file_path: ./abis/TileDiamond.json
+    handler: ./src/gv/EventHandlers.ts
+    events:
+      - event: MintTile
+      - event: MintTiles
+      - event: EditTileType
+      - event: EditDeprecateTime
+      - event: URI
+  - name: WearableDiamond
+    abi_file_path: ./abis/AavegotchiDiamond.json
+    handler: ./src/EventHandlers.ts
+    events:
+      - event: TransferSingle
+      - event: TransferBatch
+  - name: FAKEGotchisCardDiamond
+    abi_file_path: ./abis/diamond_erc1155.json
+    handler: ./src/EventHandlers.ts
+    events:
+      - event: NewSeriesStarted
+      - event: TransferSingle
+      - event: TransferBatch
+  - name: FAKEGotchisNFTDiamond
+    abi_file_path: ./abis/diamond_erc721.json
+    handler: ./src/EventHandlers.ts
+    events:
+      - event: Transfer
+      - event: MetadataActionLog
+      - event: MetadataFlag
+      - event: MetadataLike
+  - name: GbmContract
+    abi_file_path: ./abis/GbmContract.json
+    handler: ./src/handlers/gbm.ts
+    events:
+      - event: AuctionCancelled
+      - event: Auction_BidPlaced
+      - event: Auction_BidRemoved
+      - event: Auction_EndTimeUpdated
+      - event: Auction_IncentivePaid
+      - event: Auction_Initialized
+      - event: Auction_ItemClaimed
+      - event: Auction_StartTimeUpdated
+      - event: Contract_BiddingAllowed
+      - event: Auction_BuyItNowUpdated
+      - event: Auction_StartingPriceUpdated
+      - event: Auction_BoughtNow
+      - event: RoyaltyPaid
+  - name: AlchemicaFud
+    abi_file_path: ./abis/ERC20.json
+    handler: ./src/handlers/alchemica.ts
+    events:
+      - event: Transfer
+  - name: AlchemicaFomo
+    abi_file_path: ./abis/ERC20.json
+    handler: ./src/handlers/alchemica.ts
+    events:
+      - event: Transfer
+  - name: AlchemicaAlpha
+    abi_file_path: ./abis/ERC20.json
+    handler: ./src/handlers/alchemica.ts
+    events:
+      - event: Transfer
+  - name: AlchemicaKek
+    abi_file_path: ./abis/ERC20.json
+    handler: ./src/handlers/alchemica.ts
+    events:
+      - event: Transfer
+  - name: AlchemicaGltr
+    abi_file_path: ./abis/ERC20.json
+    handler: ./src/handlers/alchemica.ts
+    events:
+      - event: Transfer
+  - name: AlchemicaGhst
+    abi_file_path: ./abis/ERC20.json
+    handler: ./src/handlers/alchemica.ts
+    events:
+      - event: Transfer
+  - name: SocketBridgeFud
+    abi_file_path: ./abis/SocketBridge.json
+    handler: ./src/handlers/socketBridge.ts
+    events:
+      - event: BridgingTokens
+      - event: TokensBridged
+  - name: SocketBridgeFomo
+    abi_file_path: ./abis/SocketBridge.json
+    handler: ./src/handlers/socketBridge.ts
+    events:
+      - event: BridgingTokens
+      - event: TokensBridged
+  - name: SocketBridgeAlpha
+    abi_file_path: ./abis/SocketBridge.json
+    handler: ./src/handlers/socketBridge.ts
+    events:
+      - event: BridgingTokens
+      - event: TokensBridged
+  - name: SocketBridgeKek
+    abi_file_path: ./abis/SocketBridge.json
+    handler: ./src/handlers/socketBridge.ts
+    events:
+      - event: BridgingTokens
+      - event: TokensBridged
+  - name: SocketBridgeGltr
+    abi_file_path: ./abis/SocketBridge.json
+    handler: ./src/handlers/socketBridge.ts
+    events:
+      - event: BridgingTokens
+      - event: TokensBridged
+  - name: GltrStaking
+    abi_file_path: ./abis/GltrStaking.json
+    handler: ./src/handlers/gltrStaking.ts
+    events:
+      - event: Deposit
+      - event: Withdraw
+      - event: EmergencyWithdraw
+      - event: Harvest
+networks:
+  - id: 8453
+    start_block: 33201946
+    rpc:
+      - url: https://mainnet.base.org
+        for: fallback
+        fallback_stall_timeout: 15000
+        query_timeout_millis: 20000
+      - url: https://base-rpc.publicnode.com
+        for: fallback
+        fallback_stall_timeout: 15000
+        query_timeout_millis: 20000
+    contracts:
+      - name: AavegotchiDiamond
+        address: "0xA99c4B08201F2913Db8D28e71d020c4298F29dBF"
+      - name: RealmDiamond
+        address: "0x4B0040c3646D3c44B8a28Ad7055cfCF536c05372"
+      - name: InstallationDiamond
+        address: "0xebba5b725A2889f7f089a6cAE0246A32cad4E26b"
+      - name: TileDiamond
+        address: "0x617fdB8093b309e4699107F48812b407A7c37938"
+      - name: WearableDiamond
+        address: "0x052e6c114a166B0e91C2340370d72D4C33752B4b"
+      - name: FAKEGotchisCardDiamond
+        address: "0xe46B8902dAD841476d9Fee081F1d62aE317206A9"
+      - name: FAKEGotchisNFTDiamond
+        address: "0xAb59CA4A16925b0a4BaC5026C94bEB20A29Df479"
+      - name: GbmContract
+        address: "0x80320A0000C7A6a34086E2ACAD6915Ff57FfDA31"
+      - name: AlchemicaFud
+        address: "0x2028b4043e6722Ea164946c82fe806c4a43a0fF4"
+      - name: AlchemicaFomo
+        address: "0xA32137bfb57d2b6A9Fd2956Ba4B54741a6D54b58"
+      - name: AlchemicaAlpha
+        address: "0x15e7CaC885e3730ce6389447BC0f7AC032f31947"
+      - name: AlchemicaKek
+        address: "0xE52b9170fF4ece4C35E796Ffd74B57Dec68Ca0e5"
+      - name: AlchemicaGltr
+        address: "0x4D140CE792bEdc430498c2d219AfBC33e2992c9D"
+      - name: AlchemicaGhst
+        address: "0xcd2f22236dd9dfe2356d7c543161d4d260fd9bcb"
+      - name: SocketBridgeFud
+        address: "0xBdc2420b1E7F1f97d45b55a2ea9d3b4eB2675B75"
+      - name: SocketBridgeFomo
+        address: "0x321fCfC2cc0d45d2eb252A11bBA8274543819feB"
+      - name: SocketBridgeAlpha
+        address: "0xc87653358D5EDc7716057c865b8cD9ac5eB44A16"
+      - name: SocketBridgeKek
+        address: "0x3D57A1a3429825C35B7C432F8885fA1D0Eede460"
+      - name: SocketBridgeGltr
+        address: "0x8B2D15F61B99De5Fd53dfCFFf8AF995f17f9536d"
+      - name: GltrStaking
+        address: "0xaB449DcA14413a6ae0bcea9Ea210B57aCe280d2c"
+unordered_multichain_mode: false
+field_selection:
+  transaction_fields:
+    - hash
+    - from
+    - to
+    - value

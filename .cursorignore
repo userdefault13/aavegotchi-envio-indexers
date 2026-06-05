@@ -1,0 +1,11 @@
+node_modules/
+**/node_modules/
+packages/*/generated/
+packages/*/build/
+services/*/dist/
+docker/**/data/
+flux/out/
+.git/
+.github/
+*.log
+.env

@@ -15,9 +15,26 @@ Base chain → Envio indexers → Hasura → Compat proxy → Apps (AarcadeGh-t,
 |---------|--------|-------|
 | `packages/core-base` | [aavegotchi-core-subgraph](https://github.com/aavegotchi/aavegotchi-core-subgraph) | Base (8453) |
 | `packages/gotchiverse-base` | [gotchiverse-subgraph](https://github.com/aavegotchi/gotchiverse-subgraph) | Base (8453) |
+| `packages/svg-base` | [aavegotchi-svg-subgraph](https://github.com/aavegotchi/aavegotchi-svg-subgraph) | Base (8453) |
+| `packages/portal-base` | [aavegotchi-portal-svg-subgraph](https://github.com/aavegotchi/aavegotchi-portal-svg-subgraph) | Base (8453) |
+| `packages/alchemica-base` | [aavegotchi-alchemica-subgraph](https://github.com/aavegotchi/aavegotchi-alchemica-subgraph) | Base (8453) |
+| `packages/gltr-staking-base` | [aavegotchi-gltr-staking-subgraph](https://github.com/aavegotchi/aavegotchi-gltr-staking-subgraph) | Base (8453) |
 | `services/graphql-proxy` | The Graph → Hasura translator | — |
 
+## RPC fallback (HyperSync + Base RPC)
+
+HyperSync is the primary data source on Base. Each indexer also configures **RPC `for: fallback`** endpoints so head polling can recover when HyperSync stalls (e.g. TLS `close_notify`). Set `ALCHEMY_API_KEY` or `BASE_MAINNET_RPC` in `.env`; the Docker entrypoint prepends that URL before `envio start`. See [Envio RPC sync](https://docs.envio.dev/docs/HyperIndex/rpc-sync).
+
 ## Quick start
+
+If `envio codegen` fails with **Cannot find matching keyid** (Corepack / pnpm), run once:
+
+```bash
+corepack disable 2>/dev/null || true
+npm install -g pnpm@9.7.1
+```
+
+Or use `bash scripts/ensure-pnpm.sh` (also runs automatically before `npm run codegen:*`).
 
 ```bash
 cp .env.example .env
@@ -35,6 +52,10 @@ cd ../..
 chmod +x scripts/*.sh
 npm run docker:core
 npm run docker:gv
+npm run docker:svg
+npm run docker:portal
+npm run docker:alchemica
+npm run docker:staking
 npm run docker:proxy
 npm run smoke
 ```
@@ -48,14 +69,15 @@ npm run smoke
 | `scripts/smoke-test.sh` | Health + schema smoke tests |
 | `scripts/build-flux-images.sh` | Build (and `PUSH=1` push) Flux images |
 
-## Production deploy
+## Production deploy (VPS — recommended)
 
-1. [Provision infra](docs/INFRA_SETUP.md) — Envio token, Flux wallet, Docker Hub
-2. `PUSH=1 ENVIO_API_TOKEN=... ./scripts/build-flux-images.sh`
-3. Edit `flux/*-spec.json` — replace `REPLACE_*` placeholders
-4. Deploy via FluxOS dashboard
-5. [Cloudflare tunnel](docs/CLOUDFLARE.md) for HTTPS
-6. [Cut over clients](docs/CUTOVER.md)
+Cheapest path without FLUX tokens: one server (e.g. **Hetzner ~$50/mo**).
+
+1. [VPS guide](docs/VPS_DEPLOY.md) — create server, `.env`, `npm run docker:prod`
+2. [Cloudflare tunnel](docs/CLOUDFLARE.md) for HTTPS
+3. [Cut over clients](docs/CUTOVER.md)
+
+Optional: [RunOnFlux](docs/FLUX_DEPLOY.md) if you can fund FLUX renewals.
 
 ## Goldsky parity endpoints (reference)
 

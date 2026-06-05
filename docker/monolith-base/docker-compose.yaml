@@ -1,0 +1,104 @@
+# Local Base monolith stack: Postgres + Hasura + Envio indexer + GraphQL compat proxy.
+# Usage: docker compose -f docker/monolith-base/docker-compose.yaml --env-file .env up --build -d
+
+name: aavegotchi-monolith-base
+
+services:
+  envio-postgres:
+    image: postgres:17.5
+    restart: always
+    ports:
+      - "127.0.0.1:${MONOLITH_PG_PORT:-5436}:5432"
+    volumes:
+      - monolith-indexer-storage:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: ${ENVIO_PG_PASSWORD:-testing}
+      POSTGRES_USER: ${ENVIO_PG_USER:-postgres}
+      POSTGRES_DB: ${MONOLITH_PG_DATABASE:-envio-monolith}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${ENVIO_PG_USER:-postgres} -d ${MONOLITH_PG_DATABASE:-envio-monolith}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - monolith-indexer-network
+
+  graphql-engine:
+    image: hasura/graphql-engine:v2.43.0
+    ports:
+      - "${MONOLITH_HASURA_PORT:-8083}:8080"
+    depends_on:
+      envio-postgres:
+        condition: service_healthy
+    restart: always
+    environment:
+      # Use npm run docker:monolith — encodes ENVIO_PG_PASSWORD (/ @ # break raw URLs).
+      HASURA_GRAPHQL_DATABASE_URL: ${MONOLITH_HASURA_DATABASE_URL:-postgres://${ENVIO_PG_USER:-postgres}:${ENVIO_PG_PASSWORD:-testing}@envio-postgres:5432/${MONOLITH_PG_DATABASE:-envio-monolith}}
+      HASURA_GRAPHQL_ENABLE_CONSOLE: ${HASURA_GRAPHQL_ENABLE_CONSOLE:-true}
+      HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET:-testing}
+      HASURA_GRAPHQL_STRINGIFY_NUMERIC_TYPES: "true"
+      HASURA_GRAPHQL_UNAUTHORIZED_ROLE: public
+    healthcheck:
+      test: timeout 1s bash -c ':> /dev/tcp/127.0.0.1/8080' || exit 1
+      interval: 5s
+      timeout: 2s
+      retries: 50
+      start_period: 10s
+    networks:
+      - monolith-indexer-network
+
+  envio-indexer:
+    build:
+      context: ../..
+      dockerfile: packages/aavegotchi-monolith-base/Dockerfile
+      args:
+        ENVIO_API_TOKEN: ${ENVIO_API_TOKEN:-development}
+    depends_on:
+      graphql-engine:
+        condition: service_healthy
+    restart: always
+    environment:
+      ENVIO_API_TOKEN: ${ENVIO_API_TOKEN:-development}
+      ENVIO_PG_PASSWORD: ${ENVIO_PG_PASSWORD:-testing}
+      ENVIO_PG_HOST: envio-postgres
+      ENVIO_PG_PORT: 5432
+      ENVIO_PG_USER: ${ENVIO_PG_USER:-postgres}
+      ENVIO_PG_DATABASE: ${MONOLITH_PG_DATABASE:-envio-monolith}
+      ENVIO_PG_PUBLIC_SCHEMA: ${ENVIO_PG_PUBLIC_SCHEMA:-envio}
+      ENVIO_INDEXER_HOST: 0.0.0.0
+      ENVIO_INDEXER_PORT: ${MONOLITH_INDEXER_PORT:-9900}
+      CONFIG_FILE: config.yaml
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      TUI_OFF: ${TUI_OFF:-true}
+      ALCHEMY_API_KEY: ${ALCHEMY_API_KEY:-}
+      BASE_MAINNET_RPC: ${BASE_MAINNET_RPC:-}
+      HASURA_GRAPHQL_ENDPOINT: http://graphql-engine:8080/v1/metadata
+      HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET:-testing}
+      HASURA_SERVICE_HOST: graphql-engine
+      HASURA_SERVICE_PORT: 8080
+    networks:
+      - monolith-indexer-network
+
+  graphql-proxy:
+    build:
+      context: ../../services/graphql-proxy
+      dockerfile: Dockerfile
+    depends_on:
+      graphql-engine:
+        condition: service_healthy
+    restart: always
+    ports:
+      - "${PROXY_BIND:-127.0.0.1}:${PROXY_PORT:-8787}:8787"
+    environment:
+      PROXY_PORT: 8787
+      HASURA_URL: http://graphql-engine:8080/v1/graphql
+      HASURA_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET:-testing}
+    networks:
+      - monolith-indexer-network
+
+volumes:
+  monolith-indexer-storage:
+
+networks:
+  monolith-indexer-network:

@@ -1,0 +1,35 @@
+# yaml-language-server: $schema=./node_modules/envio/evm.schema.json
+name: aavegotchi-portal-base
+description: Aavegotchi portal SVG indexer for Base (port of aavegotchi-portal-svg-subgraph)
+contracts:
+  - name: AavegotchiDiamond
+    abi_file_path: ./abis/AavegotchiDiamond.json
+    handler: ./src/EventHandlers.ts
+    events:
+      - event: PortalOpened
+      - event: OpenPortals
+      # Transfer: topic-filtered to portal token ids (see portal-transfer-token-ids.json)
+      - event: Transfer
+networks:
+  - id: 8453
+    start_block: 33201946
+    # HyperSync is primary; RPC fallbacks activate after ~15s stall (TLS blips, etc.)
+    rpc:
+      - url: https://mainnet.base.org
+        for: fallback
+        fallback_stall_timeout: 15000
+        query_timeout_millis: 20000
+      - url: https://base-rpc.publicnode.com
+        for: fallback
+        fallback_stall_timeout: 15000
+        query_timeout_millis: 20000
+    contracts:
+      - name: AavegotchiDiamond
+        address: "0xA99c4B08201F2913Db8D28e71d020c4298F29dBF"
+unordered_multichain_mode: false
+field_selection:
+  transaction_fields:
+    - hash
+    - from
+    - to
+    - value

@@ -1,0 +1,4 @@
+type Portal @entity {
+  id: ID!
+  svgs: [String!]!
+}

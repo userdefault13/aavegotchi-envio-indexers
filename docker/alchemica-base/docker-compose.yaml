@@ -1,0 +1,82 @@
+services:
+  envio-postgres:
+    image: postgres:17.5
+    restart: always
+    ports:
+      - "${ALCHEMICA_PG_PORT:-5439}:5432"
+    volumes:
+      - alchemica-indexer-storage:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: ${ENVIO_PG_PASSWORD:-testing}
+      POSTGRES_USER: ${ENVIO_PG_USER:-postgres}
+      POSTGRES_DB: ${ALCHEMICA_PG_DATABASE:-envio-alchemica}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${ENVIO_PG_USER:-postgres} -d ${ALCHEMICA_PG_DATABASE:-envio-alchemica}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - alchemica-indexer-network
+
+  graphql-engine:
+    image: hasura/graphql-engine:v2.43.0
+    ports:
+      - "${ALCHEMICA_HASURA_PORT:-8086}:8080"
+    depends_on:
+      envio-postgres:
+        condition: service_healthy
+    restart: always
+    environment:
+      HASURA_GRAPHQL_DATABASE_URL: ${ALCHEMICA_HASURA_DATABASE_URL:-postgres://${ENVIO_PG_USER:-postgres}:${ENVIO_PG_PASSWORD:-testing}@envio-postgres:5432/${ALCHEMICA_PG_DATABASE:-envio-alchemica}}
+      HASURA_GRAPHQL_ENABLE_CONSOLE: ${HASURA_GRAPHQL_ENABLE_CONSOLE:-true}
+      HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET:-testing}
+      HASURA_GRAPHQL_STRINGIFY_NUMERIC_TYPES: "true"
+      HASURA_GRAPHQL_UNAUTHORIZED_ROLE: public
+    healthcheck:
+      test: timeout 1s bash -c ':> /dev/tcp/127.0.0.1/8080' || exit 1
+      interval: 5s
+      timeout: 2s
+      retries: 50
+      start_period: 10s
+    networks:
+      - alchemica-indexer-network
+
+  envio-indexer:
+    build:
+      context: ../..
+      dockerfile: packages/alchemica-base/Dockerfile
+      args:
+        ENVIO_API_TOKEN: ${ENVIO_API_TOKEN:-development}
+    depends_on:
+      graphql-engine:
+        condition: service_healthy
+    restart: always
+    environment:
+      ENVIO_API_TOKEN: ${ENVIO_API_TOKEN:-development}
+      ENVIO_PG_PASSWORD: ${ENVIO_PG_PASSWORD:-testing}
+      ENVIO_PG_HOST: envio-postgres
+      ENVIO_PG_PORT: 5432
+      ENVIO_PG_USER: ${ENVIO_PG_USER:-postgres}
+      ENVIO_PG_DATABASE: ${ALCHEMICA_PG_DATABASE:-envio-alchemica}
+      ENVIO_PG_PUBLIC_SCHEMA: ${ENVIO_PG_PUBLIC_SCHEMA:-envio}
+      ENVIO_INDEXER_HOST: 0.0.0.0
+      ENVIO_INDEXER_PORT: ${ALCHEMICA_INDEXER_PORT:-9895}
+      CONFIG_FILE: config.yaml
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      TUI_OFF: ${TUI_OFF:-true}
+      ENVIO_TUI: "false"
+      ALCHEMY_API_KEY: ${ALCHEMY_API_KEY:-}
+      BASE_MAINNET_RPC: ${BASE_MAINNET_RPC:-}
+      HASURA_GRAPHQL_ENDPOINT: http://graphql-engine:8080/v1/metadata
+      HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET:-testing}
+      HASURA_SERVICE_HOST: graphql-engine
+      HASURA_SERVICE_PORT: 8080
+    networks:
+      - alchemica-indexer-network
+
+volumes:
+  alchemica-indexer-storage:
+
+networks:
+  alchemica-indexer-network:

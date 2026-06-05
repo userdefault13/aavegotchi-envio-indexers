@@ -1,0 +1,16 @@
+import "./handlers/erc721Listings";
+import "./handlers/erc1155Listings";
+import "./handlers/gotchiLending";
+import "./handlers/gbm";
+import "./handlers/alchemica";
+import "./handlers/socketBridge";
+import "./handlers/gltrStaking";
+import "./gv/EventHandlers";
+import "./handlers/items";
+import "./handlers/itemTransfers";
+import "./handlers/wearables";
+import "./handlers/whitelists";
+import "./handlers/buyOrders";
+import "./handlers/fakeGotchisCard";
+import "./handlers/fakeGotchisNFT";
+import "./handlers/erc7589";

@@ -1,0 +1,35 @@
+# yaml-language-server: $schema=./node_modules/envio/evm.schema.json
+name: aavegotchi-gltr-staking-base
+description: GLTR staking farm on Base (port of aavegotchi-gltr-staking-subgraph)
+contracts:
+  - name: GltrStaking
+    abi_file_path: ./abis/GltrStaking.json
+    handler: ./src/handlers/gltrStaking.ts
+    events:
+      - event: Deposit
+      - event: Withdraw
+      - event: EmergencyWithdraw
+      - event: Harvest
+networks:
+  - id: 8453
+    start_block: 33201946
+    # HyperSync primary; RPC fallbacks after ~15s stall
+    rpc:
+      - url: https://mainnet.base.org
+        for: fallback
+        fallback_stall_timeout: 15000
+        query_timeout_millis: 20000
+      - url: https://base-rpc.publicnode.com
+        for: fallback
+        fallback_stall_timeout: 15000
+        query_timeout_millis: 20000
+    contracts:
+      - name: GltrStaking
+        address: "0xaB449DcA14413a6ae0bcea9Ea210B57aCe280d2c"
+unordered_multichain_mode: false
+field_selection:
+  transaction_fields:
+    - hash
+    - from
+    - to
+    - value
