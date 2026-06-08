@@ -23,7 +23,7 @@ Base chain → Envio indexers → Hasura → Compat proxy → Apps (AarcadeGh-t,
 
 ## RPC fallback (HyperSync + Base RPC)
 
-HyperSync is the primary data source on Base. Each indexer also configures **RPC `for: fallback`** endpoints so head polling can recover when HyperSync stalls (e.g. TLS `close_notify`). Set `ALCHEMY_API_KEY` or `BASE_MAINNET_RPC` in `.env`; the Docker entrypoint prepends that URL before `envio start`. See [Envio RPC sync](https://docs.envio.dev/docs/HyperIndex/rpc-sync).
+HyperSync is the default data source on Base. Set `ALCHEMY_API_KEY` or `BASE_MAINNET_RPC` in `.env`; the Docker entrypoint injects that URL as **`for: sync`** (RPC historical sync — use when HyperSync returns block-hash parse errors) plus public **`for: fallback`** endpoints. See [Envio RPC sync](https://docs.envio.dev/docs/HyperIndex/rpc-sync).
 
 ## Quick start
 

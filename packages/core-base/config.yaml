@@ -88,7 +88,8 @@ contracts:
 networks:
   - id: 8453
     start_block: 33201946
-    # HyperSync is primary; RPC fallbacks activate after ~20s stall (TLS blips, etc.)
+    # HyperSync is default; Docker entrypoint adds Alchemy `for: sync` when ALCHEMY_API_KEY is set.
+    # Use sync RPC when HyperSync block-hash queries fail locally or on Flux.
     rpc:
       - url: https://mainnet.base.org
         for: fallback
