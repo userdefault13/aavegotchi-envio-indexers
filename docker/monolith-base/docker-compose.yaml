@@ -73,6 +73,7 @@ services:
       TUI_OFF: ${TUI_OFF:-true}
       ALCHEMY_API_KEY: ${ALCHEMY_API_KEY:-}
       BASE_MAINNET_RPC: ${BASE_MAINNET_RPC:-}
+      BASE_RPC_FALLBACK_URLS: ${BASE_RPC_FALLBACK_URLS:-}
       HASURA_GRAPHQL_ENDPOINT: http://graphql-engine:8080/v1/metadata
       HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET:-testing}
       HASURA_SERVICE_HOST: graphql-engine
