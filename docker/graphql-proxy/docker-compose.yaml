@@ -16,6 +16,7 @@ services:
       STAKING_HASURA_URL: http://host.docker.internal:${STAKING_HASURA_PORT:-8087}/v1/graphql
       GBM_HASURA_URL: http://host.docker.internal:${GBM_HASURA_PORT:-8088}/v1/graphql
       HASURA_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET:-testing}
+      SUBGRAPH_PROXY_SECRET: ${SUBGRAPH_PROXY_SECRET:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     restart: unless-stopped

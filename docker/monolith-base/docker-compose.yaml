@@ -94,6 +94,7 @@ services:
       PROXY_PORT: 8787
       HASURA_URL: http://graphql-engine:8080/v1/graphql
       HASURA_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET:-testing}
+      SUBGRAPH_PROXY_SECRET: ${SUBGRAPH_PROXY_SECRET:-}
     networks:
       - monolith-indexer-network
 

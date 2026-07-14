@@ -113,6 +113,12 @@ async function queryHasura(
 }
 
 const CORS_ALLOW_ORIGIN = process.env.CORS_ALLOW_ORIGIN ?? "*";
+/** When set, GraphQL routes require matching `X-Subgraph-Proxy-Key`. `/health` stays public. */
+const SUBGRAPH_PROXY_SECRET = (
+  process.env.SUBGRAPH_PROXY_SECRET ??
+  process.env.X_SUBGRAPH_PROXY_KEY ??
+  ""
+).trim();
 
 const app = express();
 
@@ -122,7 +128,7 @@ app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader(
     "Access-Control-Allow-Headers",
-    "Content-Type, Accept, Authorization",
+    "Content-Type, Accept, Authorization, X-Subgraph-Proxy-Key",
   );
   res.setHeader("Access-Control-Max-Age", "86400");
   if (req.method === "OPTIONS") {
@@ -134,10 +140,28 @@ app.use((req, res, next) => {
 
 app.use(express.json({ limit: "2mb" }));
 
+function requireProxyKey(
+  req: express.Request,
+  res: express.Response,
+  next: express.NextFunction,
+) {
+  if (!SUBGRAPH_PROXY_SECRET) {
+    next();
+    return;
+  }
+  const provided = String(req.header("X-Subgraph-Proxy-Key") ?? "").trim();
+  if (!provided || provided !== SUBGRAPH_PROXY_SECRET) {
+    res.status(401).json({ errors: [{ message: "Unauthorized" }] });
+    return;
+  }
+  next();
+}
+
 app.get("/health", (_req, res) => {
   res.json({
     ok: true,
     service: "aavegotchi-graphql-proxy",
+    authRequired: Boolean(SUBGRAPH_PROXY_SECRET),
     mode:
       GV_HASURA_URL ||
       SVG_HASURA_URL ||
@@ -250,14 +274,17 @@ async function handleGraphql(req: express.Request, res: express.Response) {
 }
 
 for (const subgraph of SUBGRAPH_PATHS) {
-  app.post(`/subgraphs/name/${subgraph}`, handleGraphql);
-  app.post(`/subgraphs/name/${subgraph}/*`, handleGraphql);
+  app.post(`/subgraphs/name/${subgraph}`, requireProxyKey, handleGraphql);
+  app.post(`/subgraphs/name/${subgraph}/*`, requireProxyKey, handleGraphql);
 }
-app.post("/", handleGraphql);
+app.post("/", requireProxyKey, handleGraphql);
 
 app.listen(PORT, () => {
   console.log(`GraphQL compat proxy listening on :${PORT}`);
   console.log(`  Hasura: ${HASURA_URL}`);
+  console.log(
+    `  Auth: ${SUBGRAPH_PROXY_SECRET ? "X-Subgraph-Proxy-Key required" : "open (SUBGRAPH_PROXY_SECRET unset)"}`,
+  );
   if (GV_HASURA_URL) console.log(`  Core Hasura:   ${CORE_HASURA_URL}`);
   if (GV_HASURA_URL) console.log(`  GV Hasura:     ${GV_HASURA_URL}`);
   if (SVG_HASURA_URL) console.log(`  SVG Hasura:    ${SVG_HASURA_URL}`);
