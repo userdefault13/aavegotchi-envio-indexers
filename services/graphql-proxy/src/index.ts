@@ -9,6 +9,7 @@ import {
   isIntrospectionQuery,
   mapAlchemicaRowsForSubgraph,
   mapGbmRowsForSubgraph,
+  mapRelationFkScalarsForSubgraph,
   mapSocketRowsForSubgraph,
   mapStakingRowsForSubgraph,
   rootFieldMapForSubgraphPath,
@@ -217,6 +218,9 @@ async function handleGraphql(req: express.Request, res: express.Response) {
     }
 
     let data = wrapHasuraResponse({ [rootField]: rows }, rootField, originalRootField);
+    data = {
+      [originalRootField]: mapRelationFkScalarsForSubgraph(data[originalRootField]),
+    };
     if (req.path.includes("gbm") || req.path.includes("baazaar")) {
       data = {
         [originalRootField]: mapGbmRowsForSubgraph(data[originalRootField]),
