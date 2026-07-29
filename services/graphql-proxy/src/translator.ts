@@ -12,6 +12,9 @@ import {
 const ROOT_FIELD_MAP: Record<string, string> = {
   aavegotchi: "Aavegotchi",
   aavegotchis: "Aavegotchi",
+  /** Gotchiverse subgraph uses `gotchis` (same Envio Aavegotchi entity). */
+  gotchi: "Aavegotchi",
+  gotchis: "Aavegotchi",
   aavegotchiOption: "AavegotchiOption",
   aavegotchiOptions: "AavegotchiOption",
   claimedToken: "ClaimedToken",
@@ -260,21 +263,25 @@ function transformWhereValue(key: string, value: unknown): Record<string, unknow
   return transformWhereFlat(key, value);
 }
 
+function hasuraFieldName(graphField: string): string {
+  return RELATION_TO_FK[graphField] || graphField;
+}
+
 function transformWhereFlat(key: string, value: unknown): Record<string, unknown> {
-  if (key.endsWith("_gt")) return { [key.slice(0, -3)]: { _gt: value } };
-  if (key.endsWith("_lt")) return { [key.slice(0, -3)]: { _lt: value } };
-  if (key.endsWith("_gte")) return { [key.slice(0, -4)]: { _gte: value } };
-  if (key.endsWith("_lte")) return { [key.slice(0, -4)]: { _lte: value } };
-  if (key.endsWith("_in")) return { [key.slice(0, -3)]: { _in: value } };
-  if (key.endsWith("_not")) return { [key.slice(0, -4)]: { _neq: value } };
-  if (key.endsWith("_not_contains")) return { [key.slice(0, -13)]: { _nilike: `%${value}%` } };
-  if (key.endsWith("_contains")) return { [key.slice(0, -9)]: { _ilike: `%${value}%` } };
+  if (key.endsWith("_gt")) return { [hasuraFieldName(key.slice(0, -3))]: { _gt: value } };
+  if (key.endsWith("_lt")) return { [hasuraFieldName(key.slice(0, -3))]: { _lt: value } };
+  if (key.endsWith("_gte")) return { [hasuraFieldName(key.slice(0, -4))]: { _gte: value } };
+  if (key.endsWith("_lte")) return { [hasuraFieldName(key.slice(0, -4))]: { _lte: value } };
+  if (key.endsWith("_in")) return { [hasuraFieldName(key.slice(0, -3))]: { _in: value } };
+  if (key.endsWith("_not")) return { [hasuraFieldName(key.slice(0, -4))]: { _neq: value } };
+  if (key.endsWith("_not_contains")) return { [hasuraFieldName(key.slice(0, -13))]: { _nilike: `%${value}%` } };
+  if (key.endsWith("_contains")) return { [hasuraFieldName(key.slice(0, -9))]: { _ilike: `%${value}%` } };
   if (typeof value === "object" && value !== null && !Array.isArray(value)) {
     const nested: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
       Object.assign(nested, transformWhereFlat(k, v));
     }
-    return { [key]: nested };
+    return { [hasuraFieldName(key)]: nested };
   }
   if (
     RELATION_TO_FK[key] &&
@@ -394,11 +401,45 @@ function selectionSetToHasuraFields(
       parts.push(
         `${hasuraName} { ${selectionSetToHasuraFields(field.selectionSet, useGbmAliases, nestedAlchemica, nestedSocket, nestedSocketToken, nestedStaking)} }`,
       );
+    } else if (RELATION_TO_FK[field.name.value]) {
+      // The Graph clients often select relations as scalars (`owner` → address string).
+      // Hasura requires a selection set for object relations — use the FK column instead.
+      parts.push(RELATION_TO_FK[field.name.value]);
     } else {
       parts.push(hasuraName);
     }
   }
   return parts.join("\n        ");
+}
+
+const FK_TO_RELATION: Record<string, string> = Object.fromEntries(
+  Object.entries(RELATION_TO_FK).map(([rel, fk]) => [fk, rel]),
+);
+
+/**
+ * Rewrite Hasura FK scalars (`owner_id`) back to The Graph relation names (`owner`)
+ * when the client requested a bare relation field.
+ */
+export function mapRelationFkScalarsForSubgraph(rows: unknown): unknown {
+  if (Array.isArray(rows)) {
+    return rows.map(mapRelationFkScalarsForSubgraph);
+  }
+  if (rows && typeof rows === "object") {
+    const o = { ...(rows as Record<string, unknown>) };
+    for (const [fk, rel] of Object.entries(FK_TO_RELATION)) {
+      if (fk in o && !(rel in o)) {
+        o[rel] = o[fk];
+        delete o[fk];
+      }
+    }
+    for (const [k, v] of Object.entries(o)) {
+      if (v && typeof v === "object") {
+        o[k] = mapRelationFkScalarsForSubgraph(v);
+      }
+    }
+    return o;
+  }
+  return rows;
 }
 
 /** Map monolith GLTR staking entity fields back to subgraph API names. */
