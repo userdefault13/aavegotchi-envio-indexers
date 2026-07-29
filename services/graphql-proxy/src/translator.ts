@@ -182,12 +182,75 @@ export function rootFieldMapForSubgraphPath(path: string): Record<string, string
 
 const ORDER_SUFFIX = /_gt$|_lt$|_gte$|_lte$|_in$|_not$|_contains$|_not_contains$/;
 
+/**
+ * The Graph often filters relations with a bare id string (`owner: "0x…"`).
+ * Hasura needs the FK column (`owner_id: { _eq: "0x…" }`), not `owner: { _eq }` on User_bool_exp.
+ */
+const RELATION_TO_FK: Record<string, string> = {
+  owner: "owner_id",
+  originalOwner: "originalOwner_id",
+  creator: "creator_id",
+  borrower: "borrower_id",
+  lender: "lender_id",
+  seller: "seller_id",
+  buyer: "buyer_id",
+  parcel: "parcel_id",
+  gotchi: "gotchi_id",
+  aavegotchi: "aavegotchi_id",
+  user: "user_id",
+  account: "account_id",
+  contract: "contract_id",
+  emitter: "emitter_id",
+};
+
+/** Recursively parse GraphQL AST values (lists + nested objects). */
+function astValueToJs(
+  value: import("graphql").ValueNode,
+  variables: Record<string, unknown>,
+): unknown {
+  switch (value.kind) {
+    case Kind.VARIABLE:
+      return variables[value.name.value];
+    case Kind.STRING:
+    case Kind.ENUM:
+      return value.value;
+    case Kind.BOOLEAN:
+      return value.value;
+    case Kind.INT:
+      return parseInt(value.value, 10);
+    case Kind.FLOAT:
+      return parseFloat(value.value);
+    case Kind.NULL:
+      return null;
+    case Kind.LIST:
+      return value.values.map((v) => astValueToJs(v, variables));
+    case Kind.OBJECT: {
+      const obj: Record<string, unknown> = {};
+      for (const f of value.fields) {
+        obj[f.name.value] = astValueToJs(f.value, variables);
+      }
+      return obj;
+    }
+    default:
+      return undefined;
+  }
+}
+
 function transformWhereValue(key: string, value: unknown): Record<string, unknown> {
   if (value === null || value === undefined) {
-    return { [key]: { _eq: value } };
+    const fk = RELATION_TO_FK[key];
+    return { [fk || key]: { _eq: value } };
   }
   if (typeof value === "object" && !Array.isArray(value)) {
     const obj = value as Record<string, unknown>;
+    // The Graph / clients sometimes pass `owner: { id: "0x…" }` for a relation.
+    if (
+      RELATION_TO_FK[key] &&
+      Object.keys(obj).length === 1 &&
+      typeof obj.id === "string"
+    ) {
+      return { [RELATION_TO_FK[key]]: { _eq: obj.id } };
+    }
     const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(obj)) {
       Object.assign(out, transformWhereFlat(k, v));
@@ -204,12 +267,20 @@ function transformWhereFlat(key: string, value: unknown): Record<string, unknown
   if (key.endsWith("_lte")) return { [key.slice(0, -4)]: { _lte: value } };
   if (key.endsWith("_in")) return { [key.slice(0, -3)]: { _in: value } };
   if (key.endsWith("_not")) return { [key.slice(0, -4)]: { _neq: value } };
+  if (key.endsWith("_not_contains")) return { [key.slice(0, -13)]: { _nilike: `%${value}%` } };
+  if (key.endsWith("_contains")) return { [key.slice(0, -9)]: { _ilike: `%${value}%` } };
   if (typeof value === "object" && value !== null && !Array.isArray(value)) {
     const nested: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
       Object.assign(nested, transformWhereFlat(k, v));
     }
     return { [key]: nested };
+  }
+  if (
+    RELATION_TO_FK[key] &&
+    (typeof value === "string" || typeof value === "number" || typeof value === "boolean")
+  ) {
+    return { [RELATION_TO_FK[key]]: { _eq: value } };
   }
   return { [key]: { _eq: value } };
 }
@@ -467,29 +538,7 @@ export function translateSubgraphToHasura(
         selectionSet = node.selectionSet ?? undefined;
         fieldArgs = {};
         for (const arg of node.arguments ?? []) {
-          if (arg.value.kind === Kind.VARIABLE) {
-            fieldArgs[arg.name.value] = variables[arg.value.name.value];
-          } else if (arg.value.kind === Kind.INT) {
-            fieldArgs[arg.name.value] = parseInt(arg.value.value, 10);
-          } else if (arg.value.kind === Kind.STRING) {
-            fieldArgs[arg.name.value] = arg.value.value;
-          } else if (arg.value.kind === Kind.BOOLEAN) {
-            fieldArgs[arg.name.value] = arg.value.value;
-          } else if (arg.value.kind === Kind.OBJECT) {
-            const obj: Record<string, unknown> = {};
-            for (const f of arg.value.fields) {
-              if (f.value.kind === Kind.VARIABLE) {
-                obj[f.name.value] = variables[f.value.name.value];
-              } else if (f.value.kind === Kind.STRING) {
-                obj[f.name.value] = f.value.value;
-              } else if (f.value.kind === Kind.BOOLEAN) {
-                obj[f.name.value] = f.value.value;
-              } else if (f.value.kind === Kind.INT) {
-                obj[f.name.value] = parseInt(f.value.value, 10);
-              }
-            }
-            fieldArgs[arg.name.value] = obj;
-          }
+          fieldArgs[arg.name.value] = astValueToJs(arg.value, variables);
         }
       }
     },
