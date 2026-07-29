@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Prepends paid/custom Base RPC URLs to config.yaml fallback list when env is set.
- * Public fallbacks should already be committed in config.yaml.
+ * Injects paid/custom Base RPC URLs into config.yaml when env is set.
+ * - Primary URL → `for: sync` (historical sync via RPC; bypasses flaky HyperSync)
+ * - Extra URLs → `for: fallback`
  *
  * Usage: node ensure-base-rpc-fallbacks.mjs <path-to-config.yaml>
  * Prints: "patched" | "unchanged"
@@ -34,7 +35,22 @@ function extraFallbackUrls() {
     .filter(Boolean);
 }
 
-function rpcBlock(url) {
+function hasRpcRole(content, url, role) {
+  const idx = content.indexOf(`url: ${url}`);
+  if (idx === -1) return false;
+  return content.slice(idx, idx + 220).includes(`for: ${role}`);
+}
+
+function rpcSyncBlock(url) {
+  return [
+    "      - url: " + url,
+    "        for: sync",
+    "        query_timeout_millis: 30000",
+    "",
+  ].join("\n");
+}
+
+function rpcFallbackBlock(url) {
   return [
     "      - url: " + url,
     "        for: fallback",
@@ -45,27 +61,34 @@ function rpcBlock(url) {
 }
 
 let content = fs.readFileSync(configPath, "utf8");
-const urls = [];
 const primary = resolvePrimaryRpc();
-if (primary) urls.push(primary);
-for (const url of extraFallbackUrls()) {
-  if (!urls.includes(url)) urls.push(url);
-}
+const fallbacks = extraFallbackUrls().filter((url) => url !== primary);
 
-if (urls.length === 0) {
+if (!primary && fallbacks.length === 0) {
   console.log("unchanged");
   process.exit(0);
 }
 
 let patched = false;
-for (const url of urls) {
-  if (content.includes(url)) continue;
+
+if (primary && !hasRpcRole(content, primary, "sync")) {
   const match = content.match(/^(\s+)rpc:\s*$/m);
   if (!match) {
     console.error("Could not find 'rpc:' block in config.yaml");
     process.exit(1);
   }
-  content = content.replace(/^(\s+)rpc:\s*$/m, `$&\n${rpcBlock(url)}`);
+  content = content.replace(/^(\s+)rpc:\s*$/m, `$&\n${rpcSyncBlock(primary)}`);
+  patched = true;
+}
+
+for (const url of fallbacks) {
+  if (content.includes(`url: ${url}`)) continue;
+  const match = content.match(/^(\s+)rpc:\s*$/m);
+  if (!match) {
+    console.error("Could not find 'rpc:' block in config.yaml");
+    process.exit(1);
+  }
+  content = content.replace(/^(\s+)rpc:\s*$/m, `$&\n${rpcFallbackBlock(url)}`);
   patched = true;
 }
 
