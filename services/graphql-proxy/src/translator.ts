@@ -188,6 +188,11 @@ const ORDER_SUFFIX = /_gt$|_lt$|_gte$|_lte$|_in$|_not$|_contains$|_not_contains$
 /**
  * The Graph often filters relations with a bare id string (`owner: "0x…"`).
  * Hasura needs the FK column (`owner_id: { _eq: "0x…" }`), not `owner: { _eq }` on User_bool_exp.
+ *
+ * Do NOT map listing/purchase `seller` / `buyer` here — those are Bytes address columns
+ * on ERC721Listing / ERC1155Listing / ERC1155Purchase / buy-order entities. Remapping them
+ * to `seller_id` / `buyer_id` makes Hasura 500 (`field 'seller_id' not found`).
+ * Portal.buyer is a User relation and is handled via relationFkFor().
  */
 const RELATION_TO_FK: Record<string, string> = {
   owner: "owner_id",
@@ -195,8 +200,6 @@ const RELATION_TO_FK: Record<string, string> = {
   creator: "creator_id",
   borrower: "borrower_id",
   lender: "lender_id",
-  seller: "seller_id",
-  buyer: "buyer_id",
   parcel: "parcel_id",
   gotchi: "gotchi_id",
   aavegotchi: "aavegotchi_id",
@@ -205,6 +208,20 @@ const RELATION_TO_FK: Record<string, string> = {
   contract: "contract_id",
   emitter: "emitter_id",
 };
+
+/** Resolve relation→FK remap; listing seller/buyer stay as Bytes columns. */
+function relationFkFor(field: string, entityType?: string): string | undefined {
+  if (field === "seller") {
+    // seller is Bytes everywhere in core/monolith schemas (never a User FK).
+    return undefined;
+  }
+  if (field === "buyer") {
+    // Only Portal.buyer is a User relation; listings/purchases/buy-orders use Bytes.
+    if (entityType === "Portal") return "buyer_id";
+    return undefined;
+  }
+  return RELATION_TO_FK[field];
+}
 
 /** Recursively parse GraphQL AST values (lists + nested objects). */
 function astValueToJs(
@@ -239,75 +256,88 @@ function astValueToJs(
   }
 }
 
-function transformWhereValue(key: string, value: unknown): Record<string, unknown> {
+function transformWhereValue(
+  key: string,
+  value: unknown,
+  entityType?: string,
+): Record<string, unknown> {
   if (value === null || value === undefined) {
-    const fk = RELATION_TO_FK[key];
+    const fk = relationFkFor(key, entityType);
     return { [fk || key]: { _eq: value } };
   }
   if (typeof value === "object" && !Array.isArray(value)) {
     const obj = value as Record<string, unknown>;
     // The Graph / clients sometimes pass `owner: { id: "0x…" }` for a relation.
+    const fk = relationFkFor(key, entityType);
     if (
-      RELATION_TO_FK[key] &&
+      fk &&
       Object.keys(obj).length === 1 &&
       typeof obj.id === "string"
     ) {
-      return { [RELATION_TO_FK[key]]: { _eq: obj.id } };
+      return { [fk]: { _eq: obj.id } };
     }
     const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(obj)) {
-      Object.assign(out, transformWhereFlat(k, v));
+      Object.assign(out, transformWhereFlat(k, v, entityType));
     }
     return { [key]: out };
   }
-  return transformWhereFlat(key, value);
+  return transformWhereFlat(key, value, entityType);
 }
 
-function hasuraFieldName(graphField: string): string {
-  return RELATION_TO_FK[graphField] || graphField;
+function hasuraFieldName(graphField: string, entityType?: string): string {
+  return relationFkFor(graphField, entityType) || graphField;
 }
 
-function transformWhereFlat(key: string, value: unknown): Record<string, unknown> {
-  if (key.endsWith("_gt")) return { [hasuraFieldName(key.slice(0, -3))]: { _gt: value } };
-  if (key.endsWith("_lt")) return { [hasuraFieldName(key.slice(0, -3))]: { _lt: value } };
-  if (key.endsWith("_gte")) return { [hasuraFieldName(key.slice(0, -4))]: { _gte: value } };
-  if (key.endsWith("_lte")) return { [hasuraFieldName(key.slice(0, -4))]: { _lte: value } };
-  if (key.endsWith("_in")) return { [hasuraFieldName(key.slice(0, -3))]: { _in: value } };
-  if (key.endsWith("_not")) return { [hasuraFieldName(key.slice(0, -4))]: { _neq: value } };
-  if (key.endsWith("_not_contains")) return { [hasuraFieldName(key.slice(0, -13))]: { _nilike: `%${value}%` } };
-  if (key.endsWith("_contains")) return { [hasuraFieldName(key.slice(0, -9))]: { _ilike: `%${value}%` } };
+function transformWhereFlat(
+  key: string,
+  value: unknown,
+  entityType?: string,
+): Record<string, unknown> {
+  if (key.endsWith("_gt")) return { [hasuraFieldName(key.slice(0, -3), entityType)]: { _gt: value } };
+  if (key.endsWith("_lt")) return { [hasuraFieldName(key.slice(0, -3), entityType)]: { _lt: value } };
+  if (key.endsWith("_gte")) return { [hasuraFieldName(key.slice(0, -4), entityType)]: { _gte: value } };
+  if (key.endsWith("_lte")) return { [hasuraFieldName(key.slice(0, -4), entityType)]: { _lte: value } };
+  if (key.endsWith("_in")) return { [hasuraFieldName(key.slice(0, -3), entityType)]: { _in: value } };
+  if (key.endsWith("_not")) return { [hasuraFieldName(key.slice(0, -4), entityType)]: { _neq: value } };
+  if (key.endsWith("_not_contains")) return { [hasuraFieldName(key.slice(0, -13), entityType)]: { _nilike: `%${value}%` } };
+  if (key.endsWith("_contains")) return { [hasuraFieldName(key.slice(0, -9), entityType)]: { _ilike: `%${value}%` } };
   if (typeof value === "object" && value !== null && !Array.isArray(value)) {
     const nested: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-      Object.assign(nested, transformWhereFlat(k, v));
+      Object.assign(nested, transformWhereFlat(k, v, entityType));
     }
-    return { [hasuraFieldName(key)]: nested };
+    return { [hasuraFieldName(key, entityType)]: nested };
   }
+  const fk = relationFkFor(key, entityType);
   if (
-    RELATION_TO_FK[key] &&
+    fk &&
     (typeof value === "string" || typeof value === "number" || typeof value === "boolean")
   ) {
-    return { [RELATION_TO_FK[key]]: { _eq: value } };
+    return { [fk]: { _eq: value } };
   }
   return { [key]: { _eq: value } };
 }
 
-function transformWhere(where: Record<string, unknown> | undefined): Record<string, unknown> | undefined {
+function transformWhere(
+  where: Record<string, unknown> | undefined,
+  entityType?: string,
+): Record<string, unknown> | undefined {
   if (!where) return undefined;
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(where)) {
     if (ORDER_SUFFIX.test(key)) {
-      Object.assign(result, transformWhereFlat(key, value));
+      Object.assign(result, transformWhereFlat(key, value, entityType));
     } else if (typeof value === "object" && value !== null && !Array.isArray(value)) {
       const inner = value as Record<string, unknown>;
       const hasOps = Object.keys(inner).some((k) => k.startsWith("_"));
       if (hasOps) {
         result[key] = inner;
       } else {
-        Object.assign(result, transformWhereValue(key, value));
+        Object.assign(result, transformWhereValue(key, value, entityType));
       }
     } else {
-      Object.assign(result, transformWhereFlat(key, value));
+      Object.assign(result, transformWhereFlat(key, value, entityType));
     }
   }
   return result;
@@ -337,6 +367,7 @@ function selectionSetToHasuraFields(
   useSocketAliases: boolean,
   useSocketTokenAliases: boolean,
   useStakingAliases: boolean,
+  entityType?: string,
 ): string {
   if (!selectionSet) return "id";
   const parts: string[] = [];
@@ -399,22 +430,28 @@ function selectionSetToHasuraFields(
         nestedStaking = false;
       }
       parts.push(
-        `${hasuraName} { ${selectionSetToHasuraFields(field.selectionSet, useGbmAliases, nestedAlchemica, nestedSocket, nestedSocketToken, nestedStaking)} }`,
+        `${hasuraName} { ${selectionSetToHasuraFields(field.selectionSet, useGbmAliases, nestedAlchemica, nestedSocket, nestedSocketToken, nestedStaking, undefined)} }`,
       );
-    } else if (RELATION_TO_FK[field.name.value]) {
-      // The Graph clients often select relations as scalars (`owner` → address string).
-      // Hasura requires a selection set for object relations — use the FK column instead.
-      parts.push(RELATION_TO_FK[field.name.value]);
     } else {
-      parts.push(hasuraName);
+      const fk = relationFkFor(field.name.value, entityType);
+      if (fk) {
+        // The Graph clients often select relations as scalars (`owner` → address string).
+        // Hasura requires a selection set for object relations — use the FK column instead.
+        parts.push(fk);
+      } else {
+        parts.push(hasuraName);
+      }
     }
   }
   return parts.join("\n        ");
 }
 
-const FK_TO_RELATION: Record<string, string> = Object.fromEntries(
-  Object.entries(RELATION_TO_FK).map(([rel, fk]) => [fk, rel]),
-);
+const FK_TO_RELATION: Record<string, string> = {
+  ...Object.fromEntries(
+    Object.entries(RELATION_TO_FK).map(([rel, fk]) => [fk, rel]),
+  ),
+  buyer_id: "buyer",
+};
 
 /**
  * Rewrite Hasura FK scalars (`owner_id`) back to The Graph relation names (`owner`)
@@ -591,7 +628,10 @@ export function translateSubgraphToHasura(
 
   const limit = fieldArgs.first ?? fieldArgs.last ?? 100;
   const offset = fieldArgs.skip ?? 0;
-  const where = transformWhere(fieldArgs.where as Record<string, unknown> | undefined);
+  const where = transformWhere(
+    fieldArgs.where as Record<string, unknown> | undefined,
+    rootField,
+  );
   const orderByField = fieldArgs.orderBy as string | undefined;
   const orderDir = (fieldArgs.orderDirection as string | undefined)?.toLowerCase() ?? "asc";
 
@@ -628,6 +668,7 @@ export function translateSubgraphToHasura(
     useSocketAliases,
     useSocketTokenAliases,
     useStakingAliases,
+    rootField,
   );
 
   const hasuraQuery = `query ProxyQuery {
