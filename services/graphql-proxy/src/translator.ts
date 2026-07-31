@@ -189,17 +189,14 @@ const ORDER_SUFFIX = /_gt$|_lt$|_gte$|_lte$|_in$|_not$|_contains$|_not_contains$
  * The Graph often filters relations with a bare id string (`owner: "0x…"`).
  * Hasura needs the FK column (`owner_id: { _eq: "0x…" }`), not `owner: { _eq }` on User_bool_exp.
  *
- * Do NOT map listing/purchase `seller` / `buyer` here — those are Bytes address columns
- * on ERC721Listing / ERC1155Listing / ERC1155Purchase / buy-order entities. Remapping them
- * to `seller_id` / `buyer_id` makes Hasura 500 (`field 'seller_id' not found`).
- * Portal.buyer is a User relation and is handled via relationFkFor().
+ * Do NOT map Bytes address columns to `*_id` — that makes Hasura 500 (`field 'X_id' not found`):
+ * - listing/purchase `seller` / `buyer` (except Portal.buyer → User)
+ * - GotchiLending `lender` / `borrower` / `originalOwner` (all Bytes)
+ * Aavegotchi.originalOwner and Portal.buyer are User relations (handled in relationFkFor).
  */
 const RELATION_TO_FK: Record<string, string> = {
   owner: "owner_id",
-  originalOwner: "originalOwner_id",
   creator: "creator_id",
-  borrower: "borrower_id",
-  lender: "lender_id",
   parcel: "parcel_id",
   gotchi: "gotchi_id",
   aavegotchi: "aavegotchi_id",
@@ -209,15 +206,20 @@ const RELATION_TO_FK: Record<string, string> = {
   emitter: "emitter_id",
 };
 
-/** Resolve relation→FK remap; listing seller/buyer stay as Bytes columns. */
+/** Resolve relation→FK remap; Bytes address columns stay unmapped. */
 function relationFkFor(field: string, entityType?: string): string | undefined {
-  if (field === "seller") {
-    // seller is Bytes everywhere in core/monolith schemas (never a User FK).
+  if (field === "seller" || field === "lender" || field === "borrower") {
+    // Bytes everywhere in core/monolith schemas (never a User FK).
     return undefined;
   }
   if (field === "buyer") {
     // Only Portal.buyer is a User relation; listings/purchases/buy-orders use Bytes.
     if (entityType === "Portal") return "buyer_id";
+    return undefined;
+  }
+  if (field === "originalOwner") {
+    // Aavegotchi.originalOwner is User; GotchiLending.originalOwner is Bytes.
+    if (entityType === "Aavegotchi") return "originalOwner_id";
     return undefined;
   }
   return RELATION_TO_FK[field];
@@ -451,6 +453,7 @@ const FK_TO_RELATION: Record<string, string> = {
     Object.entries(RELATION_TO_FK).map(([rel, fk]) => [fk, rel]),
   ),
   buyer_id: "buyer",
+  originalOwner_id: "originalOwner",
 };
 
 /**
