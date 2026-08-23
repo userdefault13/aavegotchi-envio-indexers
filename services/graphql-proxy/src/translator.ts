@@ -193,6 +193,11 @@ const ORDER_SUFFIX = /_gt$|_lt$|_gte$|_lte$|_in$|_not$|_contains$|_not_contains$
  * - listing/purchase `seller` / `buyer` (except Portal.buyer → User)
  * - GotchiLending `lender` / `borrower` / `originalOwner` (all Bytes)
  * Aavegotchi.originalOwner and Portal.buyer are User relations (handled in relationFkFor).
+ *
+ * Gotchiverse-base stores address/id scalars (not User FKs):
+ * - Parcel/Installation/Tile.owner: String
+ * - Installation/Tile/ParcelAccessRight.parcel: String
+ * Remapping those to `*_id` 500s Hasura (`field 'owner_id' not found`).
  */
 const RELATION_TO_FK: Record<string, string> = {
   owner: "owner_id",
@@ -206,8 +211,29 @@ const RELATION_TO_FK: Record<string, string> = {
   emitter: "emitter_id",
 };
 
-/** Resolve relation→FK remap; Bytes address columns stay unmapped. */
-function relationFkFor(field: string, entityType?: string): string | undefined {
+/** Gotchiverse scalar fields that The Graph clients select as entities (`owner { id }`). */
+const GOTCHIVERSE_STRING_ENTITY_FIELDS = new Set(["owner", "parcel"]);
+
+/** Gotchiverse string-array fields selected as entity lists (`equippedInstallations { id }`). */
+const GOTCHIVERSE_STRING_LIST_ENTITY_FIELDS = new Set([
+  "equippedInstallations",
+  "equippedTiles",
+]);
+
+export function isGotchiverseSubgraphPath(path?: string): boolean {
+  return !!path && path.includes("gotchiverse");
+}
+
+/** Resolve relation→FK remap; Bytes / gotchiverse String columns stay unmapped. */
+function relationFkFor(
+  field: string,
+  entityType?: string,
+  subgraphPath?: string,
+): string | undefined {
+  if (isGotchiverseSubgraphPath(subgraphPath)) {
+    // Gotchiverse schema uses String address/id columns, not Hasura object relations.
+    if (GOTCHIVERSE_STRING_ENTITY_FIELDS.has(field)) return undefined;
+  }
   if (field === "seller" || field === "lender" || field === "borrower") {
     // Bytes everywhere in core/monolith schemas (never a User FK).
     return undefined;
@@ -262,56 +288,70 @@ function transformWhereValue(
   key: string,
   value: unknown,
   entityType?: string,
+  subgraphPath?: string,
 ): Record<string, unknown> {
   if (value === null || value === undefined) {
-    const fk = relationFkFor(key, entityType);
+    const fk = relationFkFor(key, entityType, subgraphPath);
     return { [fk || key]: { _eq: value } };
   }
   if (typeof value === "object" && !Array.isArray(value)) {
     const obj = value as Record<string, unknown>;
     // The Graph / clients sometimes pass `owner: { id: "0x…" }` for a relation.
-    const fk = relationFkFor(key, entityType);
+    const fk = relationFkFor(key, entityType, subgraphPath);
     if (
-      fk &&
       Object.keys(obj).length === 1 &&
       typeof obj.id === "string"
     ) {
-      return { [fk]: { _eq: obj.id } };
+      if (fk) {
+        return { [fk]: { _eq: obj.id } };
+      }
+      // Gotchiverse String columns: flatten nested id filter onto the scalar.
+      if (
+        isGotchiverseSubgraphPath(subgraphPath) &&
+        GOTCHIVERSE_STRING_ENTITY_FIELDS.has(key)
+      ) {
+        return { [key]: { _eq: obj.id } };
+      }
     }
     const out: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(obj)) {
-      Object.assign(out, transformWhereFlat(k, v, entityType));
+      Object.assign(out, transformWhereFlat(k, v, entityType, subgraphPath));
     }
     return { [key]: out };
   }
-  return transformWhereFlat(key, value, entityType);
+  return transformWhereFlat(key, value, entityType, subgraphPath);
 }
 
-function hasuraFieldName(graphField: string, entityType?: string): string {
-  return relationFkFor(graphField, entityType) || graphField;
+function hasuraFieldName(
+  graphField: string,
+  entityType?: string,
+  subgraphPath?: string,
+): string {
+  return relationFkFor(graphField, entityType, subgraphPath) || graphField;
 }
 
 function transformWhereFlat(
   key: string,
   value: unknown,
   entityType?: string,
+  subgraphPath?: string,
 ): Record<string, unknown> {
-  if (key.endsWith("_gt")) return { [hasuraFieldName(key.slice(0, -3), entityType)]: { _gt: value } };
-  if (key.endsWith("_lt")) return { [hasuraFieldName(key.slice(0, -3), entityType)]: { _lt: value } };
-  if (key.endsWith("_gte")) return { [hasuraFieldName(key.slice(0, -4), entityType)]: { _gte: value } };
-  if (key.endsWith("_lte")) return { [hasuraFieldName(key.slice(0, -4), entityType)]: { _lte: value } };
-  if (key.endsWith("_in")) return { [hasuraFieldName(key.slice(0, -3), entityType)]: { _in: value } };
-  if (key.endsWith("_not")) return { [hasuraFieldName(key.slice(0, -4), entityType)]: { _neq: value } };
-  if (key.endsWith("_not_contains")) return { [hasuraFieldName(key.slice(0, -13), entityType)]: { _nilike: `%${value}%` } };
-  if (key.endsWith("_contains")) return { [hasuraFieldName(key.slice(0, -9), entityType)]: { _ilike: `%${value}%` } };
+  if (key.endsWith("_gt")) return { [hasuraFieldName(key.slice(0, -3), entityType, subgraphPath)]: { _gt: value } };
+  if (key.endsWith("_lt")) return { [hasuraFieldName(key.slice(0, -3), entityType, subgraphPath)]: { _lt: value } };
+  if (key.endsWith("_gte")) return { [hasuraFieldName(key.slice(0, -4), entityType, subgraphPath)]: { _gte: value } };
+  if (key.endsWith("_lte")) return { [hasuraFieldName(key.slice(0, -4), entityType, subgraphPath)]: { _lte: value } };
+  if (key.endsWith("_in")) return { [hasuraFieldName(key.slice(0, -3), entityType, subgraphPath)]: { _in: value } };
+  if (key.endsWith("_not")) return { [hasuraFieldName(key.slice(0, -4), entityType, subgraphPath)]: { _neq: value } };
+  if (key.endsWith("_not_contains")) return { [hasuraFieldName(key.slice(0, -13), entityType, subgraphPath)]: { _nilike: `%${value}%` } };
+  if (key.endsWith("_contains")) return { [hasuraFieldName(key.slice(0, -9), entityType, subgraphPath)]: { _ilike: `%${value}%` } };
   if (typeof value === "object" && value !== null && !Array.isArray(value)) {
     const nested: Record<string, unknown> = {};
     for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
-      Object.assign(nested, transformWhereFlat(k, v, entityType));
+      Object.assign(nested, transformWhereFlat(k, v, entityType, subgraphPath));
     }
-    return { [hasuraFieldName(key, entityType)]: nested };
+    return { [hasuraFieldName(key, entityType, subgraphPath)]: nested };
   }
-  const fk = relationFkFor(key, entityType);
+  const fk = relationFkFor(key, entityType, subgraphPath);
   if (
     fk &&
     (typeof value === "string" || typeof value === "number" || typeof value === "boolean")
@@ -324,22 +364,23 @@ function transformWhereFlat(
 function transformWhere(
   where: Record<string, unknown> | undefined,
   entityType?: string,
+  subgraphPath?: string,
 ): Record<string, unknown> | undefined {
   if (!where) return undefined;
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(where)) {
     if (ORDER_SUFFIX.test(key)) {
-      Object.assign(result, transformWhereFlat(key, value, entityType));
+      Object.assign(result, transformWhereFlat(key, value, entityType, subgraphPath));
     } else if (typeof value === "object" && value !== null && !Array.isArray(value)) {
       const inner = value as Record<string, unknown>;
       const hasOps = Object.keys(inner).some((k) => k.startsWith("_"));
       if (hasOps) {
-        result[key] = inner;
+        result[hasuraFieldName(key, entityType, subgraphPath)] = inner;
       } else {
-        Object.assign(result, transformWhereValue(key, value, entityType));
+        Object.assign(result, transformWhereValue(key, value, entityType, subgraphPath));
       }
     } else {
-      Object.assign(result, transformWhereFlat(key, value, entityType));
+      Object.assign(result, transformWhereFlat(key, value, entityType, subgraphPath));
     }
   }
   return result;
@@ -370,8 +411,12 @@ function selectionSetToHasuraFields(
   useSocketTokenAliases: boolean,
   useStakingAliases: boolean,
   entityType?: string,
+  subgraphPath?: string,
+  wrapStringAsEntity?: string[],
+  wrapStringListAsEntity?: string[],
 ): string {
   if (!selectionSet) return "id";
+  const gotchiverse = isGotchiverseSubgraphPath(subgraphPath);
   const parts: string[] = [];
   for (const sel of selectionSet.selections) {
     if (sel.kind !== Kind.FIELD) continue;
@@ -423,6 +468,20 @@ function selectionSetToHasuraFields(
       continue;
     }
 
+    // Gotchiverse: The Graph clients nest `{ id }` on String / [String!] columns.
+    if (gotchiverse && field.selectionSet) {
+      if (GOTCHIVERSE_STRING_ENTITY_FIELDS.has(field.name.value)) {
+        parts.push(hasuraName);
+        wrapStringAsEntity?.push(field.name.value);
+        continue;
+      }
+      if (GOTCHIVERSE_STRING_LIST_ENTITY_FIELDS.has(field.name.value)) {
+        parts.push(hasuraName);
+        wrapStringListAsEntity?.push(field.name.value);
+        continue;
+      }
+    }
+
     if (field.selectionSet) {
       let nestedSocket = useSocketAliases;
       let nestedSocketToken = useSocketTokenAliases;
@@ -432,10 +491,10 @@ function selectionSetToHasuraFields(
         nestedStaking = false;
       }
       parts.push(
-        `${hasuraName} { ${selectionSetToHasuraFields(field.selectionSet, useGbmAliases, nestedAlchemica, nestedSocket, nestedSocketToken, nestedStaking, undefined)} }`,
+        `${hasuraName} { ${selectionSetToHasuraFields(field.selectionSet, useGbmAliases, nestedAlchemica, nestedSocket, nestedSocketToken, nestedStaking, undefined, subgraphPath, wrapStringAsEntity, wrapStringListAsEntity)} }`,
       );
     } else {
-      const fk = relationFkFor(field.name.value, entityType);
+      const fk = relationFkFor(field.name.value, entityType, subgraphPath);
       if (fk) {
         // The Graph clients often select relations as scalars (`owner` → address string).
         // Hasura requires a selection set for object relations — use the FK column instead.
@@ -594,16 +653,59 @@ export function mapGbmRowsForSubgraph(rows: unknown): unknown {
   return rows;
 }
 
+/**
+ * Wrap gotchiverse Hasura String / [String!] values as The Graph entity shapes
+ * when the client selected nested `{ id }` fields.
+ */
+export function mapGotchiverseStringEntities(
+  rows: unknown,
+  wrapScalar: string[],
+  wrapList: string[],
+): unknown {
+  if (!wrapScalar.length && !wrapList.length) return rows;
+  const scalarSet = new Set(wrapScalar);
+  const listSet = new Set(wrapList);
+
+  const mapRow = (row: unknown): unknown => {
+    if (Array.isArray(row)) return row.map(mapRow);
+    if (!row || typeof row !== "object") return row;
+    const o = { ...(row as Record<string, unknown>) };
+    for (const key of scalarSet) {
+      if (typeof o[key] === "string") {
+        o[key] = { id: o[key] };
+      }
+    }
+    for (const key of listSet) {
+      if (Array.isArray(o[key])) {
+        o[key] = (o[key] as unknown[]).map((v) =>
+          typeof v === "string" ? { id: v } : v,
+        );
+      }
+    }
+    for (const [k, v] of Object.entries(o)) {
+      if (v && typeof v === "object") {
+        o[k] = mapRow(v);
+      }
+    }
+    return o;
+  };
+
+  return mapRow(rows);
+}
+
 export interface TranslateResult {
   hasuraQuery: string;
   rootField: string;
   originalRootField: string;
+  wrapStringAsEntity: string[];
+  wrapStringListAsEntity: string[];
 }
 
 export function translateSubgraphToHasura(
   query: string,
   variables: Record<string, unknown> = {},
   fieldMap: Record<string, string> = ROOT_FIELD_MAP,
+  subgraphPath?: string,
 ): TranslateResult {
   const doc: DocumentNode = parse(query);
   let rootField = "";
@@ -631,10 +733,15 @@ export function translateSubgraphToHasura(
 
   const limit = fieldArgs.first ?? fieldArgs.last ?? 100;
   const offset = fieldArgs.skip ?? 0;
-  const where = transformWhere(
+  let where = transformWhere(
     fieldArgs.where as Record<string, unknown> | undefined,
     rootField,
+    subgraphPath,
   );
+  // The Graph singular lookups: parcel(id: "…") / aavegotchi(id: "…")
+  if (fieldArgs.id != null) {
+    where = { ...(where || {}), id: { _eq: fieldArgs.id } };
+  }
   const orderByField = fieldArgs.orderBy as string | undefined;
   const orderDir = (fieldArgs.orderDirection as string | undefined)?.toLowerCase() ?? "asc";
 
@@ -664,6 +771,8 @@ export function translateSubgraphToHasura(
     (fieldMap.pools === "StakingPool" ||
       fieldMap.poolPositions === "PoolPosition" ||
       fieldMap.poolStats === "StakingPoolStat");
+  const wrapStringAsEntity: string[] = [];
+  const wrapStringListAsEntity: string[] = [];
   const fields = selectionSetToHasuraFields(
     selectionSet,
     useGbmAliases,
@@ -672,6 +781,9 @@ export function translateSubgraphToHasura(
     useSocketTokenAliases,
     useStakingAliases,
     rootField,
+    subgraphPath,
+    wrapStringAsEntity,
+    wrapStringListAsEntity,
   );
 
   const hasuraQuery = `query ProxyQuery {
@@ -680,7 +792,13 @@ export function translateSubgraphToHasura(
   }
 }`;
 
-  return { hasuraQuery, rootField, originalRootField };
+  return {
+    hasuraQuery,
+    rootField,
+    originalRootField,
+    wrapStringAsEntity,
+    wrapStringListAsEntity,
+  };
 }
 
 function jsonToGraphql(obj: unknown): string {

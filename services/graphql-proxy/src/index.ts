@@ -9,6 +9,7 @@ import {
   isIntrospectionQuery,
   mapAlchemicaRowsForSubgraph,
   mapGbmRowsForSubgraph,
+  mapGotchiverseStringEntities,
   mapRelationFkScalarsForSubgraph,
   mapSocketRowsForSubgraph,
   mapStakingRowsForSubgraph,
@@ -192,10 +193,17 @@ async function handleGraphql(req: express.Request, res: express.Response) {
     }
 
     const fieldMap = rootFieldMapForSubgraphPath(req.path);
-    const { hasuraQuery, rootField, originalRootField } = translateSubgraphToHasura(
+    const {
+      hasuraQuery,
+      rootField,
+      originalRootField,
+      wrapStringAsEntity,
+      wrapStringListAsEntity,
+    } = translateSubgraphToHasura(
       query,
       variables ?? {},
       fieldMap,
+      req.path,
     );
     const hasuraData = await queryHasura(hasuraUrl, hasuraQuery);
     let rows: unknown = hasuraData[rootField];
@@ -215,6 +223,21 @@ async function handleGraphql(req: express.Request, res: express.Response) {
       originalRootField === "poolPositions"
     ) {
       rows = await enrichStakingPoolPositions(rows, query, q);
+    }
+
+    rows = mapGotchiverseStringEntities(
+      rows,
+      wrapStringAsEntity,
+      wrapStringListAsEntity,
+    );
+
+    // The Graph singular roots return one object; Hasura always returns a list.
+    if (
+      !originalRootField.endsWith("s") &&
+      originalRootField !== "statistics" &&
+      Array.isArray(rows)
+    ) {
+      rows = rows[0] ?? null;
     }
 
     let data = wrapHasuraResponse({ [rootField]: rows }, rootField, originalRootField);
