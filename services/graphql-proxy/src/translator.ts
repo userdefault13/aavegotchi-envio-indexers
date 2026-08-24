@@ -85,6 +85,18 @@ const ROOT_FIELD_MAP: Record<string, string> = {
   tileType: "TileType",
   parcelAccessRights: "ParcelAccessRight",
   parcelAccessRight: "ParcelAccessRight",
+  forgeSmelt: "ForgeSmelt",
+  forgeSmelts: "ForgeSmelt",
+  forgeQueueAdd: "ForgeQueueAdd",
+  forgeQueueAdds: "ForgeQueueAdd",
+  forgeQueueClaim: "ForgeQueueClaim",
+  forgeQueueClaims: "ForgeQueueClaim",
+  forgeInstantComplete: "ForgeInstantComplete",
+  forgeInstantCompletes: "ForgeInstantComplete",
+  forgeRarityStat: "ForgeRarityStat",
+  forgeRarityStats: "ForgeRarityStat",
+  forgeGlobalStat: "ForgeGlobalStat",
+  forgeGlobalStats: "ForgeGlobalStat",
 };
 
 /** Goldsky socket-bridge-base subgraph root fields → monolith Hasura tables */
