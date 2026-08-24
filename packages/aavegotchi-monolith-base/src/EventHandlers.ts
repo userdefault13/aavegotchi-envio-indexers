@@ -14,3 +14,4 @@ import "./handlers/buyOrders";
 import "./handlers/fakeGotchisCard";
 import "./handlers/fakeGotchisNFT";
 import "./handlers/erc7589";
+import "./handlers/forge";

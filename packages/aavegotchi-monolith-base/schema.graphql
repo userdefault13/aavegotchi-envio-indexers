@@ -1105,3 +1105,83 @@ type StakingEmergencyWithdraw {
   amount: BigInt!
   txHash: Bytes!
 }
+
+type ForgeSmelt {
+  id: ID!
+  itemId: BigInt!
+  gotchiId: BigInt!
+  rarityScoreModifier: Int!
+  alloyToUser: BigInt!
+  alloyToDao: BigInt!
+  alloyBurnedOnSmelt: BigInt!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+  txHash: Bytes!
+}
+
+type ForgeQueueAdd {
+  id: ID!
+  owner: Bytes!
+  itemId: BigInt!
+  gotchiId: BigInt!
+  queueId: BigInt!
+  readyBlock: BigInt!
+  rarityScoreModifier: Int!
+  alloyCost: BigInt!
+  essenceCost: BigInt!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+  txHash: Bytes!
+}
+
+type ForgeQueueClaim {
+  id: ID!
+  itemId: BigInt!
+  gotchiId: BigInt!
+  rarityScoreModifier: Int!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+  txHash: Bytes!
+}
+
+type ForgeInstantComplete {
+  id: ID!
+  itemId: BigInt!
+  gotchiId: BigInt!
+  gltrBlocksUsed: BigInt!
+  rarityScoreModifier: Int!
+  alloyCost: BigInt!
+  essenceCost: BigInt!
+  blockNumber: BigInt!
+  timestamp: BigInt!
+  txHash: Bytes!
+}
+
+type ForgeRarityStat {
+  id: ID!
+  rarityScoreModifier: Int!
+  smeltCount: BigInt!
+  alloyFromSmelting: BigInt!
+  alloyToUser: BigInt!
+  alloyToDao: BigInt!
+  alloyBurnedOnSmelt: BigInt!
+  forgeQueueCount: BigInt!
+  alloyUsedForging: BigInt!
+  essenceUsedForging: BigInt!
+  forgeClaimCount: BigInt!
+  instantForgeCount: BigInt!
+}
+
+type ForgeGlobalStat {
+  id: ID!
+  smeltCount: BigInt!
+  alloyFromSmelting: BigInt!
+  alloyToUser: BigInt!
+  alloyToDao: BigInt!
+  alloyBurnedOnSmelt: BigInt!
+  forgeQueueCount: BigInt!
+  alloyUsedForging: BigInt!
+  essenceUsedForging: BigInt!
+  forgeClaimCount: BigInt!
+  instantForgeCount: BigInt!
+}

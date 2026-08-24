@@ -1,0 +1,43 @@
+[
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": false, "internalType": "uint256", "name": "itemId", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "gotchiId", "type": "uint256" }
+    ],
+    "name": "ItemSmelted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "address", "name": "owner", "type": "address" },
+      { "indexed": true, "internalType": "uint256", "name": "itemId", "type": "uint256" },
+      { "indexed": true, "internalType": "uint256", "name": "gotchiId", "type": "uint256" },
+      { "indexed": false, "internalType": "uint40", "name": "readyBlock", "type": "uint40" },
+      { "indexed": false, "internalType": "uint256", "name": "queueId", "type": "uint256" }
+    ],
+    "name": "AddedToQueue",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": false, "internalType": "uint256", "name": "itemId", "type": "uint256" },
+      { "indexed": false, "internalType": "uint256", "name": "gotchiId", "type": "uint256" }
+    ],
+    "name": "ForgeQueueClaimed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      { "indexed": true, "internalType": "uint256", "name": "queueId", "type": "uint256" },
+      { "indexed": true, "internalType": "uint256", "name": "gotchiId", "type": "uint256" },
+      { "indexed": true, "internalType": "uint256", "name": "itemId", "type": "uint256" },
+      { "indexed": false, "internalType": "uint40", "name": "_blocksReduced", "type": "uint40" }
+    ],
+    "name": "ForgeTimeReduced",
+    "type": "event"
+  }
+]

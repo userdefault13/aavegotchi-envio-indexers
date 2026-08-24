@@ -200,6 +200,14 @@ contracts:
       - event: Withdraw
       - event: EmergencyWithdraw
       - event: Harvest
+  - name: ForgeDiamond
+    abi_file_path: ./abis/ForgeDiamond.json
+    handler: ./src/handlers/forge.ts
+    events:
+      - event: ItemSmelted
+      - event: AddedToQueue
+      - event: ForgeQueueClaimed
+      - event: ForgeTimeReduced
 networks:
   - id: 8453
     start_block: 33201946
@@ -253,6 +261,8 @@ networks:
         address: "0x8B2D15F61B99De5Fd53dfCFFf8AF995f17f9536d"
       - name: GltrStaking
         address: "0xaB449DcA14413a6ae0bcea9Ea210B57aCe280d2c"
+      - name: ForgeDiamond
+        address: "0x50aF2d63b839aA32b4166FD1Cb247129b715186C"
 unordered_multichain_mode: false
 field_selection:
   transaction_fields:
