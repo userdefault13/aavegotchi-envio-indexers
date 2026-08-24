@@ -135,6 +135,9 @@ AavegotchiDiamond.ERC1155ListingPriceUpdate.handler(async ({ event, context }) =
 });
 
 AavegotchiDiamond.ERC1155ExecutedToRecipient.handler(async ({ event, context }) => {
+  const block = blockRef(event);
+  await syncERC1155ListingFromChain(context, event.params.listingId, block);
+
   const purchaseId = `${event.params.listingId}_${toAddressId(event.params.buyer)}_${event.block.timestamp}`;
   let purchase = await getOrCreateERC1155Purchase(context, purchaseId);
   const listing = await getOrCreateERC1155Listing(

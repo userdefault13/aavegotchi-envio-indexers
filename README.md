@@ -66,6 +66,7 @@ npm run smoke
 |--------|---------|
 | `scripts/derive-gotchiverse-base-config.sh` | Derive Base start blocks via RPC |
 | `scripts/parity-check.sh` | Compare Goldsky vs self-hosted proxy |
+| `scripts/reconcile-erc1155-listings.mjs` | Patch stale ERC1155 listing sold/cancelled/qty from chain |
 | `scripts/smoke-test.sh` | Health + schema smoke tests |
 | `scripts/build-flux-images.sh` | Build (and `PUSH=1` push) Flux images |
 
