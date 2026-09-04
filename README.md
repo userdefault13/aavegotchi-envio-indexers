@@ -88,3 +88,14 @@ Optional: [RunOnFlux](docs/FLUX_DEPLOY.md) if you can fund FLUX renewals.
 ## License
 
 MIT — indexer handler logic derived from Aavegotchi subgraph repos (see upstream licenses).
+
+## Author
+
+**Julius Wong** (userDef@ult) — [userdefault.dev](https://www.userdefault.dev) · [GitHub](https://github.com/userdefault13) · [X](https://x.com/userDefault_0x)
+
+Freelance engineer working on AI agent orchestration, AI developer tooling, and Unity/WebGL
+multiplayer games. Write-up of the self-hosted indexing and data-infrastructure work behind this project:
+[userdefault.dev/work/aavegotchi-envio-indexers](https://www.userdefault.dev/work/aavegotchi-envio-indexers).
+
+Available for freelance and contract work — [book a consult](https://www.userdefault.dev/hire),
+or read more about [AI tooling & developer infrastructure](https://www.userdefault.dev/services/ai-tooling).
