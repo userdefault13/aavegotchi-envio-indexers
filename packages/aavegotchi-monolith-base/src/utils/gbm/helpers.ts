@@ -195,17 +195,27 @@ export function calculateIncentives(
   const bidDecimals = auction.bidDecimals;
   const bidIncMax = auction.incMax;
 
+  // Empty/unknown auctions (RPC miss) default bidDecimals to 0 — skip incentives.
+  if (bidDecimals === BIGINT_ZERO) {
+    return BIGINT_ZERO;
+  }
+
   let baseBid =
     (auction.highestBid * (bidDecimals + auction.stepMin)) / bidDecimals;
   if (baseBid === BIGINT_ZERO) {
     baseBid = BIGINT_ONE;
   }
 
+  const ratioDenom = baseBid + auction.incMin * bidDecimals;
+  if (ratioDenom === BIGINT_ZERO) {
+    return BIGINT_ZERO;
+  }
+
   let decimaledRatio =
     (bidDecimals *
       auction.bidMultiplier *
       (newBidValue - baseBid)) /
-    (baseBid + auction.incMin * bidDecimals);
+    ratioDenom;
 
   const maxRatio = bidDecimals * bidIncMax;
   if (decimaledRatio > maxRatio) {

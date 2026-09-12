@@ -5,7 +5,7 @@ import {
   ALCHEMICA_TOKENS,
   ALCHEMICA_TOTAL_SUPPLY_ACCOUNT_KEY,
 } from "./constants";
-import { fetchTokenMeta } from "./contractEffects";
+import { fetchTokenMeta, fetchTokenBalance } from "./contractEffects";
 
 export type AlchemicaContext = HandlerContext;
 
@@ -163,7 +163,18 @@ export async function handleAlchemicaTransfer(
   } else {
     const fromAccount = await getOrCreateAlchemicaAccount(context, fromNorm);
     context.AlchemicaAccount.set(fromAccount);
-    const fromBalance = await getOrCreateERC20Balance(context, contract, fromNorm);
+    let fromBalance = await getOrCreateERC20Balance(context, contract, fromNorm);
+    // If indexed state would go negative (missed prior credits), resync from chain.
+    if (fromBalance.valueExact < amount) {
+      const onChain = await fetchTokenBalance(contract.id, fromNorm);
+      if (onChain !== undefined) {
+        fromBalance = {
+          ...fromBalance,
+          valueExact: onChain,
+          value: toDecimalString(onChain, contract.decimals),
+        };
+      }
+    }
     context.ERC20Balance.set(
       applyBalanceDelta(fromBalance, -amount, contract.decimals),
     );

@@ -214,6 +214,7 @@ RealmDiamond.EquipTile.handler(async ({ event, context }) => {
   context.Tile.set({
     ...tile,
     equipped: true,
+    owner: parcel.owner ?? toAddressId(event.transaction.from ?? ZERO_ADDRESS),
   });
 });
 
@@ -245,6 +246,7 @@ RealmDiamond.UnequipTile.handler(async ({ event, context }) => {
   context.Tile.set({
     ...tile,
     equipped: false,
+    owner: tile.owner ?? parcel.owner ?? toAddressId(event.transaction.from ?? ZERO_ADDRESS),
   });
 });
 

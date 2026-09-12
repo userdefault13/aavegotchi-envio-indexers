@@ -11,3 +11,6 @@ services/*/node_modules/
 services/*/dist/
 docker/**/data/
 flux/out/
+
+# local .env backups
+.env.bak*

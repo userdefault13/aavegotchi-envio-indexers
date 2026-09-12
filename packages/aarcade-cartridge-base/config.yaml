@@ -1,0 +1,44 @@
+# yaml-language-server: $schema=./node_modules/envio/evm.schema.json
+name: aarcade-cartridge-base
+description: Aarcade Console + Cartridge diamond indexer (Base Sepolia / Base mainnet)
+contracts:
+  - name: AarcadeCartridgeDiamond
+    abi_file_path: ./abis/AarcadeCartridgeDiamond.json
+    handler: ./src/EventHandlers.ts
+    events:
+      - event: CartridgeMinted
+      - event: LineAPaid
+      - event: CAavegotchiBound
+      - event: HeroSelected
+      - event: CheckpointSaved
+      - event: PocketCredited
+      - event: PocketSpent
+      - event: RulesSynced
+      - event: WearableMinted
+      - event: WearableEquipped
+      - event: WearableUnequipped
+      - event: Transfer
+networks:
+  - id: 84532
+    start_block: 46267390
+    rpc:
+      - url: https://sepolia.base.org
+        for: fallback
+    contracts:
+      - name: AarcadeCartridgeDiamond
+        address: "0x06a4a4fbae4048f54f6383166607f5f599db8560"
+  - id: 8453
+    start_block: 1
+    rpc:
+      - url: https://mainnet.base.org
+        for: fallback
+    contracts:
+      - name: AarcadeCartridgeDiamond
+        address: "0x06a4a4fbae4048f54f6383166607f5f599db8560"
+unordered_multichain_mode: true
+field_selection:
+  transaction_fields:
+    - hash
+    - from
+    - to
+    - value

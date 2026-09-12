@@ -179,7 +179,23 @@ const GBM_ROOT_FIELD_MAP: Record<string, string> = {
   contract_BiddingAlloweds: "Contract_BiddingAllowed",
 };
 
+const CARTRIDGE_ROOT_FIELD_MAP: Record<string, string> = {
+  cartridge: "Cartridge",
+  cartridges: "Cartridge",
+  cartridgeHero: "CartridgeHero",
+  cartridgeHeros: "CartridgeHero",
+  cartridgeCheckpoint: "CartridgeCheckpoint",
+  cartridgeCheckpoints: "CartridgeCheckpoint",
+  pocketBalance: "PocketBalance",
+  pocketBalances: "PocketBalance",
+  cartridgeWearable: "CartridgeWearable",
+  cartridgeWearables: "CartridgeWearable",
+};
+
 export function rootFieldMapForSubgraphPath(path: string): Record<string, string> {
+  if (path.includes("aarcade-cartridge") || path.includes("cartridge-base")) {
+    return { ...ROOT_FIELD_MAP, ...CARTRIDGE_ROOT_FIELD_MAP };
+  }
   if (path.includes("gltr-staking") || path.includes("gltr_staking")) {
     return { ...ROOT_FIELD_MAP, ...STAKING_ROOT_FIELD_MAP };
   }

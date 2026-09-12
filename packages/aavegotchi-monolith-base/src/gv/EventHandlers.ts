@@ -39,10 +39,15 @@ RealmDiamond.Transfer.handler(async ({ event, context }) => {
   const user = await getOrCreateUser(context, event.params._to);
   context.User.set(user);
 
-  const parcel = await context.Parcel.get(event.params._tokenId.toString());
-  if (parcel) {
-    context.Parcel.set({ ...parcel, owner_id: user.id });
-  }
+  // Bridged / late-seen parcels may have no row yet — same class of bug as
+  // Aavegotchi Transfer only updating Portal when the gotchi entity is missing.
+  const parcel = await getOrCreateParcelAtBlock(
+    context,
+    event.params._tokenId,
+    user.id,
+    blockNumberFrom(event.block),
+  );
+  context.Parcel.set({ ...parcel, owner_id: user.id });
 });
 
 RealmDiamond.SurveyParcel.handler(async ({ event, context }) => {
@@ -209,6 +214,7 @@ RealmDiamond.EquipTile.handler(async ({ event, context }) => {
   context.Tile.set({
     ...tile,
     equipped: true,
+    owner: parcel.owner_id ?? toAddressId(event.transaction.from ?? ZERO_ADDRESS),
   });
 });
 
@@ -240,6 +246,7 @@ RealmDiamond.UnequipTile.handler(async ({ event, context }) => {
   context.Tile.set({
     ...tile,
     equipped: false,
+    owner: tile.owner ?? parcel.owner_id ?? toAddressId(event.transaction.from ?? ZERO_ADDRESS),
   });
 });
 

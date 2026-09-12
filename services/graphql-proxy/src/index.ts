@@ -36,6 +36,7 @@ const ALCHEMICA_HASURA_URL = process.env.ALCHEMICA_HASURA_URL;
 const STAKING_HASURA_URL =
   process.env.STAKING_HASURA_URL ?? process.env.GLTR_STAKING_HASURA_URL;
 const GBM_HASURA_URL = process.env.GBM_HASURA_URL;
+const CARTRIDGE_HASURA_URL = process.env.CARTRIDGE_HASURA_URL;
 const CORE_HASURA_URL = process.env.CORE_HASURA_URL ?? HASURA_URL;
 
 const SUBGRAPH_PATHS = [
@@ -47,9 +48,16 @@ const SUBGRAPH_PATHS = [
   "aavegotchi-alchemica-base",
   "socket-bridge-base",
   "aavegotchi-gltr-staking-base",
+  "aarcade-cartridge-base",
 ] as const;
 
 function resolveHasuraUrl(path: string, query: string): string {
+  if (
+    (path.includes("aarcade-cartridge") || path.includes("cartridge-base")) &&
+    CARTRIDGE_HASURA_URL
+  ) {
+    return CARTRIDGE_HASURA_URL;
+  }
   if (
     (path.includes("gbm") || path.includes("baazaar")) &&
     GBM_HASURA_URL
@@ -115,6 +123,28 @@ async function queryHasura(
 }
 
 const CORS_ALLOW_ORIGIN = process.env.CORS_ALLOW_ORIGIN ?? "*";
+const SUBGRAPH_PROXY_SECRET = String(process.env.SUBGRAPH_PROXY_SECRET || "").trim();
+const SUBGRAPH_PROXY_ENFORCE = String(process.env.SUBGRAPH_PROXY_ENFORCE || "").trim();
+/** warn = log missing key; hard = reject */
+const SUBGRAPH_PROXY_ENFORCE_MODE =
+  SUBGRAPH_PROXY_ENFORCE === "hard" || SUBGRAPH_PROXY_ENFORCE === "1"
+    ? "hard"
+    : SUBGRAPH_PROXY_ENFORCE === "warn"
+      ? "warn"
+      : "";
+
+function assertSubgraphProxyKey(req: express.Request, res: express.Response): boolean {
+  if (!SUBGRAPH_PROXY_SECRET || !SUBGRAPH_PROXY_ENFORCE_MODE) return true;
+  const key = String(req.headers["x-subgraph-proxy-key"] || "").trim();
+  if (key === SUBGRAPH_PROXY_SECRET) return true;
+  const msg = "Missing or invalid X-Subgraph-Proxy-Key";
+  if (SUBGRAPH_PROXY_ENFORCE_MODE === "warn") {
+    console.warn("[graphql-proxy] auth warn:", msg, req.ip);
+    return true;
+  }
+  res.status(401).json({ errors: [{ message: msg }] });
+  return false;
+}
 
 const app = express();
 
@@ -124,7 +154,7 @@ app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   res.setHeader(
     "Access-Control-Allow-Headers",
-    "Content-Type, Accept, Authorization",
+    "Content-Type, Accept, Authorization, X-Subgraph-Proxy-Key",
   );
   res.setHeader("Access-Control-Max-Age", "86400");
   if (req.method === "OPTIONS") {
@@ -161,6 +191,7 @@ app.get("/health", (_req, res) => {
 });
 
 async function handleGraphql(req: express.Request, res: express.Response) {
+  if (!assertSubgraphProxyKey(req, res)) return;
   try {
     const { query, variables } = req.body as {
       query?: string;
@@ -293,5 +324,7 @@ app.listen(PORT, () => {
     console.log(`  Alchemica Hasura: ${ALCHEMICA_HASURA_URL}`);
   }
   if (STAKING_HASURA_URL) console.log(`  Staking Hasura: ${STAKING_HASURA_URL}`);
+  if (GBM_HASURA_URL) console.log(`  GBM Hasura: ${GBM_HASURA_URL}`);
+  if (CARTRIDGE_HASURA_URL) console.log(`  Cartridge Hasura: ${CARTRIDGE_HASURA_URL}`);
   console.log(`  Subgraph paths: ${SUBGRAPH_PATHS.join(", ")}`);
 });

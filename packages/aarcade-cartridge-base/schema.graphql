@@ -1,0 +1,56 @@
+type Cartridge @entity {
+  id: ID!
+  gameId: String!
+  owner: String!
+  originConsole: String!
+  rulesVersion: Int!
+  rulesUri: String!
+  rulesHash: String!
+  lineAPaid: Boolean!
+  checkpointNonce: Int!
+  checkpointHash: String!
+  checkpointUri: String!
+  activeHeroId: String
+  pocket: [PocketBalance!]! @derivedFrom(field: "cartridge")
+  heroes: [CartridgeHero!]! @derivedFrom(field: "cartridge")
+  mintedAt: BigInt!
+  updatedAt: BigInt!
+}
+
+type PocketBalance @entity {
+  id: ID!
+  cartridge: Cartridge!
+  currency: String!
+  balance: BigInt!
+}
+
+type CartridgeHero @entity {
+  id: ID!
+  cartridge: Cartridge!
+  heroId: String!
+  bindType: String!
+  sourceTokenId: BigInt!
+  traits: [Int!]!
+  level: Int!
+  kinship: Int!
+  experience: Int!
+  equippedWearables: [Int!]!
+}
+
+type CartridgeCheckpoint @entity {
+  id: ID!
+  cartridge: Cartridge!
+  nonce: Int!
+  stateHash: String!
+  stateUri: String!
+  savedAt: BigInt!
+}
+
+type CartridgeWearable @entity {
+  id: ID!
+  cartridge: Cartridge!
+  cWearableId: String!
+  itemTypeId: Int!
+  slotIndex: Int!
+  equipped: Boolean!
+}

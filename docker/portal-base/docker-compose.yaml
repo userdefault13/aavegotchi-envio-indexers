@@ -67,7 +67,6 @@ services:
       LOG_LEVEL: ${LOG_LEVEL:-info}
       TUI_OFF: ${TUI_OFF:-true}
       ENVIO_TUI: "false"
-      ALCHEMY_API_KEY: ${ALCHEMY_API_KEY:-}
       BASE_MAINNET_RPC: ${BASE_MAINNET_RPC:-}
       # Transfer topic filters (portal-transfer-token-ids.json). Set PORTAL_INDEX_TRANSFER=0 to disable.
       PORTAL_INDEX_TRANSFER: ${PORTAL_INDEX_TRANSFER:-1}

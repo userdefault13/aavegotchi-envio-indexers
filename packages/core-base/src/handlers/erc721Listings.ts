@@ -3,9 +3,12 @@ import type { HandlerContext } from "generated";
 import {
   BIGINT_ONE,
   BIGINT_ZERO,
+  PORTAL_STATUS_CLAIMED,
   SOCKET_VAULT_ADDRESS,
+  STATUS_AAVEGOTCHI,
   ZERO_ADDRESS,
 } from "../utils/constants";
+import { fetchAavegotchi } from "../utils/contractEffects";
 import {
   clearActiveListingForERC721Category,
   getOrCreateAavegotchi,
@@ -26,12 +29,27 @@ AavegotchiDiamond.Transfer.handler(async ({ event, context }) => {
   const newOwner = await getOrCreateUser(context, event.params._to);
   context.User.set(newOwner);
 
-  const gotchi = await getOrCreateAavegotchi(context, id, block, false);
+  let gotchi = await getOrCreateAavegotchi(context, id, block, false);
   const portal = await getOrCreatePortal(context, id, true);
+  const from = toAddressId(event.params._from);
+
+  // Bridged / secondary transfers of already-claimed gotchis often have no
+  // Aavegotchi row yet. Previously we only updated Portal.owner, so wallets
+  // showed portalsOwned but empty gotchisOwned.
+  if (!gotchi) {
+    const onChain = await fetchAavegotchi(event.params._tokenId, block.number);
+    if (onChain && onChain.status === STATUS_AAVEGOTCHI) {
+      gotchi = await getOrCreateAavegotchi(context, id, block, true);
+    }
+  }
 
   if (gotchi) {
     let updated = gotchi;
-    if (!updated.modifiedRarityScore) {
+    if (
+      updated.status !== STATUS_AAVEGOTCHI ||
+      !updated.modifiedRarityScore ||
+      from === SOCKET_VAULT_ADDRESS
+    ) {
       updated = await updateAavegotchiInfo(
         context,
         updated,
@@ -40,28 +58,33 @@ AavegotchiDiamond.Transfer.handler(async ({ event, context }) => {
       );
     }
 
-    const from = toAddressId(event.params._from);
-    if (from === SOCKET_VAULT_ADDRESS) {
-      updated = await updateAavegotchiInfo(
-        context,
-        updated,
-        event.params._tokenId,
-        block,
-      );
-    }
-
-    context.Aavegotchi.set({
-      ...updated,
-      owner_id: newOwner.id,
-      originalOwner_id: newOwner.id,
-    });
-
-    if (newOwner.id === ZERO_ADDRESS) {
-      const stats = await getStatisticEntity(context);
-      context.Statistic.set({
-        ...stats,
-        aavegotchisSacrificed: stats.aavegotchisSacrificed + BIGINT_ONE,
+    if (updated.status === STATUS_AAVEGOTCHI) {
+      context.Aavegotchi.set({
+        ...updated,
+        owner_id: newOwner.id,
+        originalOwner_id: updated.originalOwner_id ?? newOwner.id,
       });
+
+      if (portal) {
+        const zeroUser = await getOrCreateUser(context, ZERO_ADDRESS);
+        context.User.set(zeroUser);
+        context.Portal.set({
+          ...portal,
+          gotchi_id: updated.id,
+          status: PORTAL_STATUS_CLAIMED,
+          owner_id: zeroUser.id,
+        });
+      }
+
+      if (newOwner.id === ZERO_ADDRESS) {
+        const stats = await getStatisticEntity(context);
+        context.Statistic.set({
+          ...stats,
+          aavegotchisSacrificed: stats.aavegotchisSacrificed + BIGINT_ONE,
+        });
+      }
+    } else if (portal) {
+      context.Portal.set({ ...portal, owner_id: newOwner.id });
     }
   } else if (portal) {
     context.Portal.set({ ...portal, owner_id: newOwner.id });
@@ -122,7 +145,14 @@ AavegotchiDiamond.ClaimAavegotchi.handler(async ({ event, context }) => {
     claimedAt: BigInt(event.block.number),
     claimedTime: BigInt(event.block.timestamp),
   });
-  context.Aavegotchi.set(gotchi);
+  // Claim burns portal ownership; gotchi owner is the pre-claim portal owner
+  // (or on-chain owner from updateAavegotchiInfo).
+  const claimerId = portal.owner_id ?? gotchi.owner_id;
+  context.Aavegotchi.set({
+    ...gotchi,
+    owner_id: claimerId ?? gotchi.owner_id,
+    originalOwner_id: gotchi.originalOwner_id ?? claimerId ?? gotchi.owner_id,
+  });
 });
 
 AavegotchiDiamond.ERC721ListingAdd.handler(async ({ event, context }) => {
