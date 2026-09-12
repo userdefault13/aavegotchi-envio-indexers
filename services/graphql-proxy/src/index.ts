@@ -225,6 +225,32 @@ app.get("/health", (_req, res) => {
   });
 });
 
+
+function stripMetaSelection(query: string): { withoutMeta: string; onlyMeta: boolean } {
+  const match = /_meta\s*\{/.exec(query);
+  if (!match || match.index == null) {
+    return { withoutMeta: query, onlyMeta: false };
+  }
+  const start = match.index;
+  const braceStart = query.indexOf('{', start);
+  let depth = 0;
+  let end = braceStart;
+  for (let j = braceStart; j < query.length; j++) {
+    const ch = query[j];
+    if (ch === '{') depth++;
+    else if (ch === '}') {
+      depth--;
+      if (depth === 0) {
+        end = j + 1;
+        break;
+      }
+    }
+  }
+  const withoutMeta = `${query.slice(0, start)} ${query.slice(end)}`;
+  const onlyMeta = withoutMeta.replace(/[#\s,{}]/g, '').length === 0;
+  return { withoutMeta, onlyMeta };
+}
+
 async function handleGraphql(req: express.Request, res: express.Response) {
   if (!assertSubgraphProxyKey(req, res)) return;
   try {
@@ -245,9 +271,7 @@ async function handleGraphql(req: express.Request, res: express.Response) {
     let workingQuery = query;
     if (query.includes("_meta")) {
       metaBlock = await fetchIndexedBlock(hasuraUrl);
-      const withoutMeta = query.replace(/_meta\s*\{[^{}]*\}/g, " ");
-      const onlyMeta =
-        withoutMeta.replace(/[#\s,{}]/g, "").length === 0;
+      const { withoutMeta, onlyMeta } = stripMetaSelection(query);
       if (onlyMeta) {
         res.json({ data: buildMetaResponse(metaBlock) });
         return;
