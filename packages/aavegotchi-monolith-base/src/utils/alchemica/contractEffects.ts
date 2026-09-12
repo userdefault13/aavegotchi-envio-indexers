@@ -5,14 +5,12 @@ import { getOrFetchRpc, rpcCacheKey } from "../rpcCache";
 
 function resolveRpcUrl(): string {
   if (process.env.BASE_MAINNET_RPC) return process.env.BASE_MAINNET_RPC;
-  const alchemyKey = process.env.ALCHEMY_API_KEY;
-  if (alchemyKey) return `https://base-mainnet.g.alchemy.com/v2/${alchemyKey}`;
   return "https://mainnet.base.org";
 }
 
 const fetchRequest = new FetchRequest(resolveRpcUrl());
 fetchRequest.timeout = 30_000;
-const provider = new JsonRpcProvider(fetchRequest);
+const provider = new JsonRpcProvider(fetchRequest, undefined, { batchMaxCount: 10, batchStallTime: 25 });
 
 async function fetchTokenMetaUncached(
   address: string,
@@ -39,5 +37,22 @@ export async function fetchTokenMeta(
 ): Promise<AlchemicaTokenMeta | undefined> {
   return getOrFetchRpc(rpcCacheKey("erc20Meta", 0n, address), () =>
     fetchTokenMetaUncached(address),
+  );
+}
+
+export async function fetchTokenBalance(
+  tokenAddress: string,
+  account: string,
+): Promise<bigint | undefined> {
+  return getOrFetchRpc(
+    rpcCacheKey("erc20Bal", 0n, `${tokenAddress}:${account}`),
+    async () => {
+      try {
+        const token = new Contract(tokenAddress, erc20Abi, provider);
+        return BigInt(await token.balanceOf.staticCall(account));
+      } catch {
+        return undefined;
+      }
+    },
   );
 }

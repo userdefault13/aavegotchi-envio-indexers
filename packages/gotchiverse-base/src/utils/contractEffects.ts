@@ -11,8 +11,6 @@ import {
 
 function resolveRpcUrl(): string {
   if (process.env.BASE_MAINNET_RPC) return process.env.BASE_MAINNET_RPC;
-  const alchemyKey = process.env.ALCHEMY_API_KEY;
-  if (alchemyKey) return `https://base-mainnet.g.alchemy.com/v2/${alchemyKey}`;
   return "https://mainnet.base.org";
 }
 

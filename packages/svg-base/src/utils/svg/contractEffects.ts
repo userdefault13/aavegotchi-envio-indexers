@@ -5,14 +5,12 @@ import { getOrFetchRpc, rpcCacheKey } from "../rpcCache";
 
 function resolveRpcUrl(): string {
   if (process.env.BASE_MAINNET_RPC) return process.env.BASE_MAINNET_RPC;
-  const alchemyKey = process.env.ALCHEMY_API_KEY;
-  if (alchemyKey) return `https://base-mainnet.g.alchemy.com/v2/${alchemyKey}`;
   return "https://mainnet.base.org";
 }
 
 const fetchRequest = new FetchRequest(resolveRpcUrl());
 fetchRequest.timeout = 30_000;
-const provider = new JsonRpcProvider(fetchRequest);
+const provider = new JsonRpcProvider(fetchRequest, undefined, { batchMaxCount: 10, batchStallTime: 25 });
 const diamond = new Contract(
   CORE_DIAMOND_ADDRESS,
   aavegotchiDiamondAbi,

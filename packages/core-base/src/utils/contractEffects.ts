@@ -9,8 +9,6 @@ import { getOrFetchRpc, rpcCacheKey } from "./rpcCache";
 
 function resolveRpcUrl(): string {
   if (process.env.BASE_MAINNET_RPC) return process.env.BASE_MAINNET_RPC;
-  const alchemyKey = process.env.ALCHEMY_API_KEY;
-  if (alchemyKey) return `https://base-mainnet.g.alchemy.com/v2/${alchemyKey}`;
   return "https://mainnet.base.org";
 }
 
@@ -20,7 +18,7 @@ const RPC_TIMEOUT_MS = 15_000;
 function createProvider(): JsonRpcProvider {
   const fetchRequest = new FetchRequest(RPC_URL);
   fetchRequest.timeout = RPC_TIMEOUT_MS;
-  return new JsonRpcProvider(fetchRequest);
+  return new JsonRpcProvider(fetchRequest, undefined, { batchMaxCount: 10, batchStallTime: 25 });
 }
 
 const provider = createProvider();

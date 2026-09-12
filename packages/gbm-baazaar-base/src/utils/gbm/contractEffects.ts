@@ -5,15 +5,13 @@ import { getOrFetchRpc, rpcCacheKey } from "../rpcCache";
 
 function resolveRpcUrl(): string {
   if (process.env.BASE_MAINNET_RPC) return process.env.BASE_MAINNET_RPC;
-  const alchemyKey = process.env.ALCHEMY_API_KEY;
-  if (alchemyKey) return `https://base-mainnet.g.alchemy.com/v2/${alchemyKey}`;
   return "https://mainnet.base.org";
 }
 
 const RPC_URL = resolveRpcUrl();
 const fetchRequest = new FetchRequest(RPC_URL);
 fetchRequest.timeout = 30_000;
-const provider = new JsonRpcProvider(fetchRequest);
+const provider = new JsonRpcProvider(fetchRequest, undefined, { batchMaxCount: 10, batchStallTime: 25 });
 const gbmContract = new Contract(GBM_CONTRACT_ADDRESS, gbmAbi, provider);
 
 function toBigInt(value: bigint | number | { toString(): string }): bigint {
