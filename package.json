@@ -69,7 +69,8 @@
     "flux:test:core": "bash scripts/flux-test-core.sh",
     "flux:build": "bash scripts/build-flux-images.sh",
     "flux:build:push": "PUSH=1 bash scripts/build-flux-images.sh",
-    "flux:build:gbm:push": "BUILD_ONLY=gbm,proxy PUSH=1 bash scripts/build-flux-images.sh"
+    "flux:build:gbm:push": "BUILD_ONLY=gbm,proxy PUSH=1 bash scripts/build-flux-images.sh",
+    "docker:ports": "bash scripts/docker-port-reconcile.sh"
   },
   "engines": {
     "node": ">=20"

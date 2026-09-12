@@ -5,7 +5,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 # shellcheck source=/dev/null
 [ -f "$ROOT/.env" ] && source "$ROOT/.env"
 
-PROXY="${PROXY_URL:-http://127.0.0.1:${PROXY_PORT:-8787}}"
+PROXY="${PROXY_URL:-http://127.0.0.1:${PROXY_PORT:-8786}}"
 
 echo "Smoke: proxy health"
 curl -sf "$PROXY/health" | python3 -m json.tool

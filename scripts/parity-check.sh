@@ -11,7 +11,7 @@ goldsky_url() {
   echo "https://api.goldsky.com/api/public/${GOLDSKY_PROJECT}/subgraphs/$1/prod/gn"
 }
 
-PROXY="${PROXY_URL:-http://127.0.0.1:${PROXY_PORT:-8787}}"
+PROXY="${PROXY_URL:-http://127.0.0.1:${PROXY_PORT:-8786}}"
 GOLDSKY_AUTH_HEADER=()
 [ -n "${GOLDSKY_API_KEY:-}" ] && GOLDSKY_AUTH_HEADER=(-H "Authorization: Bearer $GOLDSKY_API_KEY")
 

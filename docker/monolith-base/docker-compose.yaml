@@ -88,7 +88,7 @@ services:
         condition: service_healthy
     restart: always
     ports:
-      - "${PROXY_BIND:-127.0.0.1}:${PROXY_PORT:-8787}:8787"
+      - "${PROXY_BIND:-127.0.0.1}:${PROXY_PORT:-8786}:8787"
     environment:
       PROXY_PORT: 8787
       HASURA_URL: http://graphql-engine:8080/v1/graphql

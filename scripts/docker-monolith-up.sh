@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Start monolith stack with URL-encoded Hasura DATABASE_URL (passwords with / @ # break raw URLs).
+# Host ports are STATIC from .env — never auto-bump (that drifts Cloudflare / edge proxy / SOP).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -13,37 +14,26 @@ if [ -f .env ]; then
 fi
 
 export MONOLITH_PG_PORT="${MONOLITH_PG_PORT:-5436}"
-export PROXY_PORT="${PROXY_PORT:-8787}"
+# 8786 = Envio graphql-proxy (internal). 8787 reserved for Aarcade edge / CF tunnel.
+export PROXY_PORT="${PROXY_PORT:-8786}"
 
 port_in_use() {
   command -v lsof >/dev/null 2>&1 && lsof -nP -iTCP:"$1" -sTCP:LISTEN >/dev/null 2>&1
 }
 
 if port_in_use "$MONOLITH_PG_PORT"; then
-  if [ "$MONOLITH_PG_PORT" = "5434" ] && ! port_in_use 5436; then
-    echo "WARN: MONOLITH_PG_PORT=5434 is in use (gotchiverse-base?). Using 5436 for monolith." >&2
-    export MONOLITH_PG_PORT=5436
-  else
-    echo "ERROR: MONOLITH_PG_PORT=$MONOLITH_PG_PORT is already in use." >&2
-    echo "  Set MONOLITH_PG_PORT to a free port in .env (default is now 5436)." >&2
-    exit 1
-  fi
+  echo "ERROR: MONOLITH_PG_PORT=$MONOLITH_PG_PORT is already in use." >&2
+  echo "  Stop the other listener or set MONOLITH_PG_PORT in .env (static contract: 5436)." >&2
+  echo "  Diagnose: npm run docker:ports" >&2
+  exit 1
 fi
 
 if port_in_use "$PROXY_PORT"; then
-  if [ "$PROXY_PORT" = "8787" ] && ! port_in_use 8788; then
-    echo "WARN: PROXY_PORT=8787 is in use. Using 8788 for monolith proxy." >&2
-    export PROXY_PORT=8788
-  else
-    echo "ERROR: PROXY_PORT=$PROXY_PORT is already in use." >&2
-    echo "  Stop the other proxy or set PROXY_PORT in .env." >&2
-    exit 1
-  fi
+  echo "ERROR: PROXY_PORT=$PROXY_PORT is already in use." >&2
+  echo "  Stop the other proxy or set PROXY_PORT in .env (static contract: 8786 for Envio; 8787 is Aarcade edge)." >&2
+  echo "  Diagnose: npm run docker:ports" >&2
+  exit 1
 fi
-
-USER="${ENVIO_PG_USER:-postgres}"
-PASS="${ENVIO_PG_PASSWORD:-testing}"
-DB="${MONOLITH_PG_DATABASE:-envio-monolith}"
 
 export MONOLITH_HASURA_DATABASE_URL
 MONOLITH_HASURA_DATABASE_URL="$(node -e "
