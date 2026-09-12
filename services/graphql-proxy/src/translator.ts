@@ -857,12 +857,15 @@ export function isIntrospectionQuery(query: string): boolean {
   return query.includes("__schema") || query.includes("__type");
 }
 
-export function buildMetaResponse(): Record<string, unknown> {
+export function buildMetaResponse(
+  blockNumber = 0,
+  opts?: { hasIndexingErrors?: boolean; deployment?: string },
+): Record<string, unknown> {
   return {
     _meta: {
-      block: { number: 0 },
-      deployment: "envio-self-hosted",
-      hasIndexingErrors: false,
+      block: { number: Number.isFinite(blockNumber) ? Math.max(0, Math.trunc(blockNumber)) : 0 },
+      deployment: opts?.deployment ?? "envio-self-hosted",
+      hasIndexingErrors: Boolean(opts?.hasIndexingErrors),
     },
   };
 }

@@ -122,6 +122,41 @@ async function queryHasura(
   return json.data;
 }
 
+
+const CHAIN_META_QUERY = `{
+  chain_metadata(limit: 1) {
+    latest_processed_block
+    latest_fetched_block_number
+    block_height
+  }
+}`;
+
+async function fetchIndexedBlock(hasuraUrl: string): Promise<number> {
+  try {
+    const data = await queryHasura(hasuraUrl, CHAIN_META_QUERY);
+    const rows = data.chain_metadata;
+    const row = Array.isArray(rows) ? rows[0] : null;
+    if (!row || typeof row !== "object") return 0;
+    const r = row as Record<string, unknown>;
+    const candidates = [
+      r.latest_processed_block,
+      r.latest_fetched_block_number,
+      r.block_height,
+    ];
+    for (const c of candidates) {
+      const n = typeof c === "number" ? c : Number(c);
+      if (Number.isFinite(n) && n > 0) return Math.trunc(n);
+    }
+    return 0;
+  } catch (err) {
+    console.warn(
+      "[graphql-proxy] chain_metadata lookup failed:",
+      err instanceof Error ? err.message : err,
+    );
+    return 0;
+  }
+}
+
 const CORS_ALLOW_ORIGIN = process.env.CORS_ALLOW_ORIGIN ?? "*";
 const SUBGRAPH_PROXY_SECRET = String(process.env.SUBGRAPH_PROXY_SECRET || "").trim();
 const SUBGRAPH_PROXY_ENFORCE = String(process.env.SUBGRAPH_PROXY_ENFORCE || "").trim();
@@ -202,21 +237,32 @@ async function handleGraphql(req: express.Request, res: express.Response) {
       return;
     }
 
-    if (query.includes("_meta")) {
-      res.json({ data: buildMetaResponse() });
-      return;
-    }
-
     const hasuraUrl = resolveHasuraUrl(req.path, query);
 
-    if (isIntrospectionQuery(query)) {
+    // The Graph clients expect `_meta.block.number`. Envio Hasura has no native
+    // `_meta`, so we synthesize it from chain_metadata (not a hardcoded 0).
+    let metaBlock: number | null = null;
+    let workingQuery = query;
+    if (query.includes("_meta")) {
+      metaBlock = await fetchIndexedBlock(hasuraUrl);
+      const withoutMeta = query.replace(/_meta\s*\{[^{}]*\}/g, " ");
+      const onlyMeta =
+        withoutMeta.replace(/[#\s,{}]/g, "").length === 0;
+      if (onlyMeta) {
+        res.json({ data: buildMetaResponse(metaBlock) });
+        return;
+      }
+      workingQuery = withoutMeta;
+    }
+
+    if (isIntrospectionQuery(workingQuery)) {
       const introRes = await fetch(hasuraUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
         },
-        body: JSON.stringify({ query, variables }),
+        body: JSON.stringify({ query: workingQuery, variables }),
       });
       const introJson = await introRes.json();
       res.status(introRes.status).json(introJson);
@@ -231,7 +277,7 @@ async function handleGraphql(req: express.Request, res: express.Response) {
       wrapStringAsEntity,
       wrapStringListAsEntity,
     } = translateSubgraphToHasura(
-      query,
+      workingQuery,
       variables ?? {},
       fieldMap,
       req.path,
@@ -296,6 +342,9 @@ async function handleGraphql(req: express.Request, res: express.Response) {
       };
     }
 
+    if (metaBlock != null) {
+      Object.assign(data, buildMetaResponse(metaBlock));
+    }
     res.json({ data });
   } catch (err) {
     const base = err instanceof Error ? err.message : String(err);
