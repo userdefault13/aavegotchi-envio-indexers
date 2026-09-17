@@ -190,6 +190,16 @@ const CARTRIDGE_ROOT_FIELD_MAP: Record<string, string> = {
   pocketBalances: "PocketBalance",
   cartridgeWearable: "CartridgeWearable",
   cartridgeWearables: "CartridgeWearable",
+  agent: "Agent",
+  agents: "Agent",
+  agentController: "AgentController",
+  agentControllers: "AgentController",
+  agentGameRep: "AgentGameRep",
+  agentGameReps: "AgentGameRep",
+  agentCheckpoint: "AgentCheckpoint",
+  agentCheckpoints: "AgentCheckpoint",
+  gameAttestor: "GameAttestor",
+  gameAttestors: "GameAttestor",
 };
 
 export function rootFieldMapForSubgraphPath(path: string): Record<string, string> {

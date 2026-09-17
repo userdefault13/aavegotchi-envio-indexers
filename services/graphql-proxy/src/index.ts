@@ -37,6 +37,7 @@ const STAKING_HASURA_URL =
   process.env.STAKING_HASURA_URL ?? process.env.GLTR_STAKING_HASURA_URL;
 const GBM_HASURA_URL = process.env.GBM_HASURA_URL;
 const CARTRIDGE_HASURA_URL = process.env.CARTRIDGE_HASURA_URL;
+const ACARTRIDGE_HASURA_URL = process.env.ACARTRIDGE_HASURA_URL;
 const CORE_HASURA_URL = process.env.CORE_HASURA_URL ?? HASURA_URL;
 
 const SUBGRAPH_PATHS = [
@@ -49,9 +50,14 @@ const SUBGRAPH_PATHS = [
   "socket-bridge-base",
   "aavegotchi-gltr-staking-base",
   "aarcade-cartridge-base",
+  "aarcade-acartridge-base",
 ] as const;
 
 function resolveHasuraUrl(path: string, query: string): string {
+  // aCartridge (agents) — checked first: "aarcade-acartridge-base" also matches "cartridge-base" below
+  if (path.includes("acartridge") && ACARTRIDGE_HASURA_URL) {
+    return ACARTRIDGE_HASURA_URL;
+  }
   if (
     (path.includes("aarcade-cartridge") || path.includes("cartridge-base")) &&
     CARTRIDGE_HASURA_URL
@@ -399,5 +405,6 @@ app.listen(PORT, () => {
   if (STAKING_HASURA_URL) console.log(`  Staking Hasura: ${STAKING_HASURA_URL}`);
   if (GBM_HASURA_URL) console.log(`  GBM Hasura: ${GBM_HASURA_URL}`);
   if (CARTRIDGE_HASURA_URL) console.log(`  Cartridge Hasura: ${CARTRIDGE_HASURA_URL}`);
+  if (ACARTRIDGE_HASURA_URL) console.log(`  aCartridge Hasura: ${ACARTRIDGE_HASURA_URL}`);
   console.log(`  Subgraph paths: ${SUBGRAPH_PATHS.join(", ")}`);
 });

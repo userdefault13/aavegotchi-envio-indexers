@@ -1,0 +1,65 @@
+# aCartridge (Agent as Player) — mirrors the aCartridge diamond's agent state so
+# AarcadeGh-t / game servers can look agents up by owner or controller without scanning.
+
+type Agent @entity {
+  id: ID! # tokenId
+  tokenId: BigInt!
+  owner: String!
+  account: String! # ERC-6551 account that owns the agent's cartridges
+  originConsole: String!
+  mintCurrency: String! # bytes32 currency key from ACartridgeMinted
+  mintAmount: BigInt!
+  reputation: BigInt!
+  zone: String
+  koWins: Int!
+  koLosses: Int!
+  worldUpdatedAt: BigInt!
+  # ids of AgentController rows for this agent (Envio handlers have no list queries)
+  controllerIds: [String!]!
+  controllers: [AgentController!]! @derivedFrom(field: "agent")
+  games: [AgentGameRep!]! @derivedFrom(field: "agent")
+  checkpoints: [AgentCheckpoint!]! @derivedFrom(field: "agent")
+  mintedAt: BigInt!
+  updatedAt: BigInt!
+}
+
+type AgentController @entity {
+  id: ID! # tokenId-controller
+  agent: Agent!
+  controller: String!
+  expiresAt: BigInt!
+  dailyCapGhst: BigInt!
+  active: Boolean! # false after revoke / transfer
+  setAt: BigInt!
+}
+
+type AgentGameRep @entity {
+  id: ID! # tokenId-gameIdHash
+  agent: Agent!
+  gameId: String! # bytes32 keccak of the game id string
+  cartridgeId: BigInt!
+  bestScore: BigInt!
+  sessions: Int!
+  lastNonce: BigInt!
+  lastAttestedAt: BigInt!
+  enteredAt: BigInt!
+}
+
+type AgentCheckpoint @entity {
+  id: ID! # tokenId-gameIdHash-nonce
+  agent: Agent!
+  gameId: String!
+  cartridgeId: BigInt!
+  nonce: BigInt!
+  stateHash: String!
+  score: BigInt!
+  attested: Boolean!
+  at: BigInt!
+  txHash: String!
+}
+
+type GameAttestor @entity {
+  id: ID! # gameIdHash
+  signer: String!
+  updatedAt: BigInt!
+}

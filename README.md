@@ -19,6 +19,7 @@ Base chain → Envio indexers → Hasura → Compat proxy → Apps (AarcadeGh-t,
 | `packages/portal-base` | [aavegotchi-portal-svg-subgraph](https://github.com/aavegotchi/aavegotchi-portal-svg-subgraph) | Base (8453) |
 | `packages/alchemica-base` | [aavegotchi-alchemica-subgraph](https://github.com/aavegotchi/aavegotchi-alchemica-subgraph) | Base (8453) |
 | `packages/gltr-staking-base` | [aavegotchi-gltr-staking-subgraph](https://github.com/aavegotchi/aavegotchi-gltr-staking-subgraph) | Base (8453) |
+| `packages/aarcade-acartridge-base` | Aarcade aCartridge diamond (Agent as Player): agents, controllers, game reps, attested checkpoints | Base Sepolia (84532) |
 | `services/graphql-proxy` | The Graph → Hasura translator | — |
 
 ## RPC fallback (HyperSync + Base RPC)
