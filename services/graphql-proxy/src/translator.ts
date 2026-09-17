@@ -272,6 +272,10 @@ function relationFkFor(
     // Gotchiverse schema uses String address/id columns, not Hasura object relations.
     if (GOTCHIVERSE_STRING_ENTITY_FIELDS.has(field)) return undefined;
   }
+  if (subgraphPath?.includes("acartridge")) {
+    // aarcade-acartridge-base: Agent.owner / Agent.account are address strings, AgentController.controller too.
+    if (field === "owner" || field === "account") return undefined;
+  }
   if (field === "seller" || field === "lender" || field === "borrower") {
     // Bytes everywhere in core/monolith schemas (never a User FK).
     return undefined;
