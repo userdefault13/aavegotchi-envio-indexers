@@ -38,6 +38,7 @@ const STAKING_HASURA_URL =
 const GBM_HASURA_URL = process.env.GBM_HASURA_URL;
 const CARTRIDGE_HASURA_URL = process.env.CARTRIDGE_HASURA_URL;
 const ACARTRIDGE_HASURA_URL = process.env.ACARTRIDGE_HASURA_URL;
+const BAZAAR_HASURA_URL = process.env.BAZAAR_HASURA_URL;
 const CORE_HASURA_URL = process.env.CORE_HASURA_URL ?? HASURA_URL;
 
 const SUBGRAPH_PATHS = [
@@ -51,9 +52,15 @@ const SUBGRAPH_PATHS = [
   "aavegotchi-gltr-staking-base",
   "aarcade-cartridge-base",
   "aarcade-acartridge-base",
+  "aarcade-bazaar-base",
 ] as const;
 
 function resolveHasuraUrl(path: string, query: string): string {
+  // Aarcade's own marketplace ("bazaar", one a) — checked first so it can never fall into the
+  // DAO GBM/Baazaar ("baazaar", two a's) rule below.
+  if (path.includes("aarcade-bazaar") && BAZAAR_HASURA_URL) {
+    return BAZAAR_HASURA_URL;
+  }
   // aCartridge (agents) — checked first: "aarcade-acartridge-base" also matches "cartridge-base" below
   if (path.includes("acartridge") && ACARTRIDGE_HASURA_URL) {
     return ACARTRIDGE_HASURA_URL;
@@ -406,5 +413,6 @@ app.listen(PORT, () => {
   if (GBM_HASURA_URL) console.log(`  GBM Hasura: ${GBM_HASURA_URL}`);
   if (CARTRIDGE_HASURA_URL) console.log(`  Cartridge Hasura: ${CARTRIDGE_HASURA_URL}`);
   if (ACARTRIDGE_HASURA_URL) console.log(`  aCartridge Hasura: ${ACARTRIDGE_HASURA_URL}`);
+  if (BAZAAR_HASURA_URL) console.log(`  Aarcade Bazaar Hasura: ${BAZAAR_HASURA_URL}`);
   console.log(`  Subgraph paths: ${SUBGRAPH_PATHS.join(", ")}`);
 });

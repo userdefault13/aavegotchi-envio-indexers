@@ -95,6 +95,7 @@ services:
       HASURA_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET:-testing}
       CARTRIDGE_HASURA_URL: http://host.docker.internal:${CARTRIDGE_HASURA_PORT:-8089}/v1/graphql
       ACARTRIDGE_HASURA_URL: http://host.docker.internal:${ACARTRIDGE_HASURA_PORT:-8090}/v1/graphql
+      BAZAAR_HASURA_URL: http://host.docker.internal:${BAZAAR_HASURA_PORT:-8091}/v1/graphql
       SUBGRAPH_PROXY_SECRET: ${SUBGRAPH_PROXY_SECRET:-}
       SUBGRAPH_PROXY_ENFORCE: ${SUBGRAPH_PROXY_ENFORCE:-}
     extra_hosts:

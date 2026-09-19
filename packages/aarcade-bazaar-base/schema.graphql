@@ -1,0 +1,218 @@
+# Aarcade Bazaar diamond — Aarcade's own marketplace (AarcadeGh-t docs/AARCADE_BAZAAR_DIAMOND_PLAN.md).
+# Field names follow core-base's Baazaar entities where they fit, plus `currency`: every price is in
+# the smallest unit of `currency` (GHST 18 decimals, USDC 6) even though the field says priceInWei.
+# Addresses are lower-case strings.
+
+type Bazaar @entity {
+  id: ID! # "bazaar"
+  treasury: String!
+  feeBps: Int!
+  maxRoyaltyBps: Int!
+  paused: Boolean!
+  minAuctionDuration: BigInt!
+  maxAuctionDuration: BigInt!
+  minIncrementBps: Int!
+  extensionWindow: BigInt!
+  updatedAt: BigInt!
+}
+
+type Collection @entity {
+  id: ID! # token address
+  enabled: Boolean!
+  standard: Int! # 1 = ERC-721, 2 = ERC-1155
+  tokenBound: Boolean! # ERC-6551 collection (aCartridge) — buyers can pin the account state
+  category: Int!
+  royaltyBps: Int! # bazaar-set royalty; 0 = the collection's own ERC-2981 (if any) applies
+  royaltyReceiver: String
+  updatedAt: BigInt!
+}
+
+type Currency @entity {
+  id: ID! # token address
+  enabled: Boolean!
+  minPrice: BigInt!
+  updatedAt: BigInt!
+}
+
+type ERC721Listing @entity {
+  id: ID! # listingId
+  listingId: BigInt!
+  seller: String! @index
+  erc721TokenAddress: String! @index
+  tokenId: BigInt!
+  category: Int!
+  currency: String!
+  priceInWei: BigInt!
+  timeCreated: BigInt!
+  blockCreated: BigInt!
+  priceUpdatedAt: BigInt
+  cancelled: Boolean!
+  timePurchased: BigInt # null until sold
+  buyer: String @index
+  recipient: String
+  active: Boolean! @index # not cancelled and not purchased
+  txHash: String!
+}
+
+type ERC1155Listing @entity {
+  id: ID! # listingId
+  listingId: BigInt!
+  seller: String! @index
+  erc1155TokenAddress: String! @index
+  erc1155TypeId: BigInt!
+  category: Int!
+  quantity: BigInt! # remaining
+  currency: String!
+  priceInWei: BigInt! # per unit
+  timeCreated: BigInt!
+  blockCreated: BigInt!
+  timeLastPurchased: BigInt
+  sold: Boolean!
+  cancelled: Boolean!
+  active: Boolean! @index
+  purchases: [ERC1155Purchase!]! @derivedFrom(field: "listing")
+  txHash: String!
+}
+
+type ERC1155Purchase @entity {
+  id: ID! # txHash-logIndex
+  listing: ERC1155Listing!
+  seller: String! @index
+  buyer: String! @index
+  recipient: String!
+  erc1155TokenAddress: String!
+  erc1155TypeId: BigInt!
+  quantity: BigInt!
+  currency: String!
+  priceInWei: BigInt! # per unit
+  timePurchased: BigInt!
+  txHash: String!
+}
+
+type ERC721BuyOrder @entity {
+  id: ID! # orderId
+  orderId: BigInt!
+  buyer: String! @index
+  erc721TokenAddress: String! @index
+  tokenId: BigInt!
+  currency: String!
+  priceInWei: BigInt! # escrowed in the diamond
+  expiresAt: BigInt! # 0 = never
+  expectedAccountState: BigInt! # max uint256 = no guard
+  createdAt: BigInt!
+  cancelled: Boolean!
+  executedAt: BigInt
+  seller: String
+  active: Boolean! @index # expiry is not an event: also compare expiresAt with now
+  txHash: String!
+}
+
+type ERC1155BuyOrder @entity {
+  id: ID! # orderId
+  orderId: BigInt!
+  buyer: String! @index
+  erc1155TokenAddress: String! @index
+  erc1155TypeId: BigInt!
+  quantity: BigInt! # remaining
+  quantityFilled: BigInt!
+  currency: String!
+  priceInWei: BigInt! # per unit
+  expiresAt: BigInt!
+  createdAt: BigInt!
+  lastExecutedAt: BigInt
+  completed: Boolean!
+  cancelled: Boolean!
+  active: Boolean! @index
+  executions: [ERC1155BuyOrderExecution!]! @derivedFrom(field: "buyOrder")
+  txHash: String!
+}
+
+type ERC1155BuyOrderExecution @entity {
+  id: ID! # txHash-logIndex
+  buyOrder: ERC1155BuyOrder!
+  buyer: String! @index
+  seller: String! @index
+  erc1155TokenAddress: String!
+  erc1155TypeId: BigInt!
+  quantity: BigInt!
+  currency: String!
+  priceInWei: BigInt!
+  executedAt: BigInt!
+  txHash: String!
+}
+
+type Auction @entity {
+  id: ID! # auctionId
+  auctionId: BigInt!
+  seller: String! @index
+  tokenAddress: String! @index
+  tokenId: BigInt!
+  quantity: BigInt!
+  standard: Int!
+  category: Int!
+  currency: String!
+  startPrice: BigInt!
+  buyNowPrice: BigInt! # 0 = none
+  startTime: BigInt!
+  endTime: BigInt! # moves when a late bid extends the auction
+  highestBidder: String @index
+  highestBid: BigInt!
+  highestBidId: String
+  bidCount: Int!
+  boughtNow: Boolean!
+  settled: Boolean!
+  cancelled: Boolean!
+  winner: String # null when it ended with no bids
+  itemPendingTo: String # set when delivery failed; cleared by withdrawAuctionItem
+  active: Boolean! @index # not settled and not cancelled (ended-but-unclaimed is still active)
+  bids: [Bid!]! @derivedFrom(field: "auction")
+  createdAt: BigInt!
+  settledAt: BigInt
+  txHash: String!
+}
+
+type Bid @entity {
+  id: ID! # txHash-logIndex
+  auction: Auction!
+  bidder: String! @index
+  amount: BigInt!
+  endTimeAfter: BigInt!
+  outbid: Boolean!
+  at: BigInt!
+  txHash: String!
+}
+
+# One per settled sale, whatever the path. kind: 1 = 721 listing, 2 = 1155 listing,
+# 3 = 721 buy order, 4 = 1155 buy order, 5 = auction. refId is that listing / order / auction id.
+type Sale @entity {
+  id: ID! # txHash-logIndex
+  kind: Int! @index
+  refId: BigInt!
+  currency: String! @index
+  seller: String! @index
+  gross: BigInt!
+  fee: BigInt!
+  royaltyReceiver: String
+  royalty: BigInt!
+  sellerProceeds: BigInt!
+  at: BigInt!
+  blockNumber: BigInt!
+  txHash: String!
+}
+
+type CurrencyStat @entity {
+  id: ID! # currency address
+  sales: Int!
+  volume: BigInt!
+  fees: BigInt!
+  royalties: BigInt!
+}
+
+# Refunds the diamond could not push (e.g. a blacklisted USDC holder); withdrawn with withdrawCredit.
+type PendingCredit @entity {
+  id: ID! # wallet-currency
+  wallet: String! @index # not `user`: the GraphQL proxy remaps that name to a User FK
+  currency: String!
+  amount: BigInt!
+  updatedAt: BigInt!
+}

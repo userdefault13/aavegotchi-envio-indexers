@@ -202,7 +202,31 @@ const CARTRIDGE_ROOT_FIELD_MAP: Record<string, string> = {
   gameAttestors: "GameAttestor",
 };
 
+/** aarcade-bazaar-base — Aarcade's own marketplace. The listing / buy-order roots come from ROOT_FIELD_MAP. */
+const BAZAAR_ROOT_FIELD_MAP: Record<string, string> = {
+  bazaar: "Bazaar",
+  bazaars: "Bazaar",
+  collection: "Collection",
+  collections: "Collection",
+  currency: "Currency",
+  currencies: "Currency",
+  auction: "Auction",
+  auctions: "Auction",
+  bid: "Bid",
+  bids: "Bid",
+  sale: "Sale",
+  sales: "Sale",
+  currencyStat: "CurrencyStat",
+  currencyStats: "CurrencyStat",
+  pendingCredit: "PendingCredit",
+  pendingCredits: "PendingCredit",
+};
+
 export function rootFieldMapForSubgraphPath(path: string): Record<string, string> {
+  // Before the GBM rule: "aarcade-bazaar" (one a) must never pick up the DAO "baazaar" map.
+  if (path.includes("aarcade-bazaar")) {
+    return { ...ROOT_FIELD_MAP, ...BAZAAR_ROOT_FIELD_MAP };
+  }
   if (path.includes("aarcade-cartridge") || path.includes("cartridge-base")) {
     return { ...ROOT_FIELD_MAP, ...CARTRIDGE_ROOT_FIELD_MAP };
   }

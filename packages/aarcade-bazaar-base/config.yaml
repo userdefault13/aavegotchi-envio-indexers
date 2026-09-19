@@ -1,0 +1,57 @@
+# yaml-language-server: $schema=./node_modules/envio/evm.schema.json
+name: aarcade-bazaar-base
+description: Aarcade Bazaar diamond indexer — ERC-721/1155 listings, buy orders, auctions, bids and settled sales in GHST or USDC (Base Sepolia / Base mainnet)
+contracts:
+  - name: AarcadeBazaarDiamond
+    abi_file_path: ./abis/AarcadeBazaarDiamond.json
+    handler: ./src/EventHandlers.ts
+    events:
+      - event: BazaarInitialized
+      - event: CollectionSet
+      - event: CollectionRoyaltySet
+      - event: CurrencySet
+      - event: FeeBpsUpdated
+      - event: MaxRoyaltyBpsUpdated
+      - event: TreasuryUpdated
+      - event: PausedSet
+      - event: AuctionParamsUpdated
+      - event: SaleSettled
+      - event: ERC721ListingAdd
+      - event: ERC721ListingPriceUpdate
+      - event: ERC721ListingCancelled
+      - event: ERC721ExecutedListing
+      - event: ERC1155ListingAdd
+      - event: ERC1155ListingUpdated
+      - event: ERC1155ListingCancelled
+      - event: ERC1155ExecutedListing
+      - event: ERC721BuyOrderAdded
+      - event: ERC721BuyOrderCancelled
+      - event: ERC721BuyOrderExecuted
+      - event: ERC1155BuyOrderAdded
+      - event: ERC1155BuyOrderCancelled
+      - event: ERC1155BuyOrderExecuted
+      - event: AuctionCreated
+      - event: AuctionBid
+      - event: AuctionBoughtNow
+      - event: AuctionCancelled
+      - event: AuctionSettled
+      - event: AuctionItemPending
+      - event: AuctionItemWithdrawn
+      - event: CreditAdded
+      - event: CreditWithdrawn
+networks:
+  - id: 84532
+    # config/bazaar.base-sepolia.json deployBlock (first deploy tx landed at 46974119)
+    start_block: 46974113
+    rpc:
+      - url: https://sepolia.base.org
+        for: fallback
+    contracts:
+      - name: AarcadeBazaarDiamond
+        address: "0x5cF0ecC7240201Aa1f6A2B0B94F2B35122b8a59d"
+  # Base mainnet: fill in after the mainnet deploy (docs/AARCADE_BAZAAR_DIAMOND_PLAN.md phase 5).
+unordered_multichain_mode: true
+field_selection:
+  transaction_fields:
+    - hash
+    - from
