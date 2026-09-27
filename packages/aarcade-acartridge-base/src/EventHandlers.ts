@@ -1,4 +1,14 @@
-import { ACartridgeDiamond, Agent, AgentController, AgentGameRep, AgentCheckpoint, GameAttestor } from "generated";
+import {
+  ACartridgeDiamond,
+  AbraLicense,
+  Agent,
+  AgentController,
+  AgentGameRep,
+  AgentCheckpoint,
+  GameAttestor,
+  GotchiBotLicense,
+  License,
+} from "generated";
 
 const ZERO = "0x0000000000000000000000000000000000000000";
 
@@ -144,4 +154,35 @@ ACartridgeDiamond.AttestorSet.handler(async ({ event, context }) => {
     signer: event.params.signer.toLowerCase(),
     updatedAt: BigInt(event.block.timestamp),
   });
+});
+
+type LicenseTransfer = {
+  params: { from: string; to: string; tokenId: bigint };
+  block: { timestamp: number };
+};
+
+async function recordLicenseTransfer(
+  kind: "gotchibot" | "abra",
+  event: LicenseTransfer,
+  context: { License: { get: (id: string) => Promise<License | undefined>; set: (row: License) => void } },
+) {
+  const id = `${kind}-${event.params.tokenId.toString()}`;
+  const at = BigInt(event.block.timestamp);
+  const prev = await context.License.get(id);
+  context.License.set({
+    id,
+    kind,
+    tokenId: event.params.tokenId,
+    owner: event.params.to.toLowerCase(),
+    mintedAt: prev?.mintedAt ?? at,
+    updatedAt: at,
+  });
+}
+
+GotchiBotLicense.Transfer.handler(async ({ event, context }) => {
+  await recordLicenseTransfer("gotchibot", event, context);
+});
+
+AbraLicense.Transfer.handler(async ({ event, context }) => {
+  await recordLicenseTransfer("abra", event, context);
 });

@@ -63,3 +63,14 @@ type GameAttestor @entity {
   signer: String!
   updatedAt: BigInt!
 }
+
+# GotchiBot + Abra License NFTs. Tier is not in any event; read tierOf(tokenId)
+# on-chain (immutable per token). Burned tokens keep the row with the zero owner.
+type License @entity {
+  id: ID! # kind-tokenId
+  kind: String! @index # gotchibot | abra
+  tokenId: BigInt!
+  owner: String! @index
+  mintedAt: BigInt!
+  updatedAt: BigInt!
+}

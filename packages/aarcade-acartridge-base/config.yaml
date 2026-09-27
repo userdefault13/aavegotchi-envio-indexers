@@ -16,15 +16,31 @@ contracts:
       - event: ReputationUpdated
       - event: WorldUpdated
       - event: AttestorSet
+  # License NFTs: holder per token, so license checks skip ownerOf scans.
+  - name: GotchiBotLicense
+    abi_file_path: ./abis/ERC721Transfer.json
+    handler: ./src/EventHandlers.ts
+    events:
+      - event: Transfer
+  - name: AbraLicense
+    abi_file_path: ./abis/ERC721Transfer.json
+    handler: ./src/EventHandlers.ts
+    events:
+      - event: Transfer
 networks:
   - id: 84532
-    start_block: 46953163
+    # GotchiBotLicense deploy block (ACartridgeDiamond: 46953163, AbraLicense: 47170298).
+    start_block: 46263489
     rpc:
       - url: https://sepolia.base.org
         for: fallback
     contracts:
       - name: ACartridgeDiamond
         address: "0x8fB6DD5Cef4521E01cCAb178B84eE1392CdB1232"
+      - name: GotchiBotLicense
+        address: "0xfd576e01a60CF9F867c74eE01F01151D93a08bEf"
+      - name: AbraLicense
+        address: "0x55A310C560Cb1927Ae356aCFaC34BBACC501C264"
   # Base mainnet: fill in after the mainnet deploy (docs/ACARTRIDGE_DIAMOND_PLAN.md phase 4).
 unordered_multichain_mode: true
 field_selection:

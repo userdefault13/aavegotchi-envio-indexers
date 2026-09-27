@@ -200,6 +200,8 @@ const CARTRIDGE_ROOT_FIELD_MAP: Record<string, string> = {
   agentCheckpoints: "AgentCheckpoint",
   gameAttestor: "GameAttestor",
   gameAttestors: "GameAttestor",
+  license: "License",
+  licenses: "License",
 };
 
 export function rootFieldMapForSubgraphPath(path: string): Record<string, string> {
