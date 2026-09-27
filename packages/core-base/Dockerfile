@@ -11,6 +11,7 @@ RUN npm install -g pnpm@9.7.1
 WORKDIR /envio-indexer
 
 COPY scripts/ensure-base-rpc-fallbacks.mjs /opt/envio-scripts/ensure-base-rpc-fallbacks.mjs
+COPY scripts/ensure-hypersync-url.mjs /opt/envio-scripts/ensure-hypersync-url.mjs
 COPY scripts/docker-indexer-entrypoint.sh /opt/envio-scripts/docker-indexer-entrypoint.sh
 RUN chmod +x /opt/envio-scripts/docker-indexer-entrypoint.sh
 
