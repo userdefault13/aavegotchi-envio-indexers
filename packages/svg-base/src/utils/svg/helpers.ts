@@ -1,5 +1,4 @@
 import type { HandlerContext } from "generated";
-import { BLOCK_SIDEVIEWS_ACTIVATED } from "./constants";
 import { fetchAavegotchiSideSvgs, fetchAavegotchiSvg, fetchItemSvgs } from "./contractEffects";
 
 type AavegotchiEntity = NonNullable<
@@ -7,7 +6,7 @@ type AavegotchiEntity = NonNullable<
 >;
 
 /**
- * Re-reads an item's four SVG views at `blockNumber` and stores them. `meta`
+ * Re-reads an item's four SVG views (latest state) and stores them. `meta`
  * comes from AddItemType / UpdateItemType; UpdateSvg passes none and keeps
  * whatever the entity already has.
  */
@@ -56,17 +55,15 @@ export async function refreshAavegotchiSvgFromChain(
   tokenId: bigint,
   blockNumber: bigint,
 ): Promise<AavegotchiEntity | undefined> {
-  if (blockNumber >= BLOCK_SIDEVIEWS_ACTIVATED) {
-    const sideSvgs = await fetchAavegotchiSideSvgs(tokenId, blockNumber);
-    if (sideSvgs && sideSvgs.length >= 4) {
-      return {
-        ...gotchi,
-        svg: sideSvgs[0],
-        left: sideSvgs[1],
-        right: sideSvgs[2],
-        back: sideSvgs[3],
-      };
-    }
+  const sideSvgs = await fetchAavegotchiSideSvgs(tokenId, blockNumber);
+  if (sideSvgs && sideSvgs.length >= 4) {
+    return {
+      ...gotchi,
+      svg: sideSvgs[0],
+      left: sideSvgs[1],
+      right: sideSvgs[2],
+      back: sideSvgs[3],
+    };
   }
 
   const svg = await fetchAavegotchiSvg(tokenId, blockNumber);
