@@ -70,6 +70,15 @@ npm run smoke
 | `scripts/reconcile-erc1155-listings.mjs` | Patch stale ERC1155 listing sold/cancelled/qty from chain |
 | `scripts/smoke-test.sh` | Health + schema smoke tests |
 | `scripts/build-flux-images.sh` | Build (and `PUSH=1` push) Flux images |
+| `scripts/deploy-graphql-proxy.sh` | Deploy `services/graphql-proxy` to the home monolith stack (omarchyM1): tests, backup, rebuild, smoke test, auto-rollback. `--dry-run`, `--smoke` |
+
+## Home stack (omarchyM1): restarting services
+
+The monolith stack's secrets live in the **repo-root `.env`**. Always run compose through
+`scripts/docker-monolith-up.sh …` (or deploy the proxy with `scripts/deploy-graphql-proxy.sh`), never plain
+`docker compose up` from `docker/monolith-base/`: that doesn't read the root `.env`, so the proxy starts with
+the default Hasura secret and every subgraph query fails (`invalid x-hasura-admin-secret`), as happened on
+2026-09-28.
 
 ## Production deploy (VPS — recommended)
 
