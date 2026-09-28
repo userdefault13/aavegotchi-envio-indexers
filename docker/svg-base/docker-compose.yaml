@@ -53,6 +53,8 @@ services:
         condition: service_healthy
     restart: always
     environment:
+      HYPERSYNC_URL_84532: http://host.docker.internal:8798
+      HYPERSYNC_URL_8453: http://host.docker.internal:8797
       ENVIO_API_TOKEN: ${ENVIO_API_TOKEN:-development}
       ENVIO_PG_PASSWORD: ${ENVIO_PG_PASSWORD:-testing}
       ENVIO_PG_HOST: envio-postgres
@@ -73,6 +75,8 @@ services:
       HASURA_SERVICE_PORT: 8080
     networks:
       - svg-indexer-network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
 volumes:
   svg-indexer-storage:
