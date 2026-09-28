@@ -14,8 +14,11 @@ import {
   mapSocketRowsForSubgraph,
   mapStakingRowsForSubgraph,
   rootFieldMapForSubgraphPath,
+  hasuraColumnsFromIntrospection,
   translateSubgraphToHasura,
+  withHasuraColumns,
   wrapHasuraResponse,
+  type HasuraColumns,
 } from "./translator.js";
 
 const PORT = parseInt(process.env.PROXY_PORT ?? "8787", 10);
@@ -128,6 +131,29 @@ async function queryHasura(
   return json.data;
 }
 
+
+/**
+ * Each Hasura's entity columns, from introspection, so relation→FK remapping follows the real schema.
+ * Cached per endpoint; on failure the translator falls back to its name-based rules and we retry soon.
+ */
+const COLUMNS_QUERY = `{ __schema { types { name kind fields { name type { kind ofType { kind ofType { kind } } } } } } }`;
+const COLUMNS_TTL_MS = 10 * 60_000;
+const COLUMNS_RETRY_MS = 60_000;
+const columnsCache = new Map<string, { at: number; ttl: number; columns: HasuraColumns | null }>();
+
+async function hasuraColumnsFor(hasuraUrl: string): Promise<HasuraColumns | null> {
+  const cached = columnsCache.get(hasuraUrl);
+  if (cached && Date.now() - cached.at < cached.ttl) return cached.columns;
+  try {
+    const columns = hasuraColumnsFromIntrospection(await queryHasura(hasuraUrl, COLUMNS_QUERY));
+    columnsCache.set(hasuraUrl, { at: Date.now(), ttl: COLUMNS_TTL_MS, columns });
+    return columns;
+  } catch (err) {
+    console.warn(`[graphql-proxy] column introspection failed for ${hasuraUrl}; using name-based FK rules:`, (err as Error).message);
+    columnsCache.set(hasuraUrl, { at: Date.now(), ttl: COLUMNS_RETRY_MS, columns: cached?.columns ?? null });
+    return cached?.columns ?? null;
+  }
+}
 
 const CHAIN_META_QUERY = `{
   chain_metadata(limit: 1) {
@@ -300,17 +326,15 @@ async function handleGraphql(req: express.Request, res: express.Response) {
     }
 
     const fieldMap = rootFieldMapForSubgraphPath(req.path);
+    const columns = await hasuraColumnsFor(hasuraUrl);
     const {
       hasuraQuery,
       rootField,
       originalRootField,
       wrapStringAsEntity,
       wrapStringListAsEntity,
-    } = translateSubgraphToHasura(
-      workingQuery,
-      variables ?? {},
-      fieldMap,
-      req.path,
+    } = withHasuraColumns(columns, () =>
+      translateSubgraphToHasura(workingQuery, variables ?? {}, fieldMap, req.path),
     );
     const hasuraData = await queryHasura(hasuraUrl, hasuraQuery);
     let rows: unknown = hasuraData[rootField];

@@ -264,12 +264,68 @@ export function isGotchiverseSubgraphPath(path?: string): boolean {
   return !!path && path.includes("gotchiverse");
 }
 
+/**
+ * What the Hasura schema says each entity's fields are. When known, it decides whether a field is an
+ * object relation (select/filter its `<field>_id` FK) or a plain column (leave it alone), instead of
+ * guessing from the field name. Guessing broke every Bytes/String column named like a relation, e.g.
+ * ItemTypeOwnership.owner (Bytes) → `field 'owner_id' not found`.
+ */
+export type HasuraColumns = Map<string, { scalars: Set<string>; objects: Set<string> }>;
+
+let activeColumns: HasuraColumns | null = null;
+
+/**
+ * Run a (synchronous) translation with the target Hasura's columns in scope. Translation never awaits,
+ * so this can't leak between concurrent requests.
+ */
+export function withHasuraColumns<T>(columns: HasuraColumns | null, fn: () => T): T {
+  const previous = activeColumns;
+  activeColumns = columns;
+  try {
+    return fn();
+  } finally {
+    activeColumns = previous;
+  }
+}
+
+type IntrospectedType = { kind?: string; ofType?: IntrospectedType | null } | null | undefined;
+
+/** Build HasuraColumns from `{ __schema { types { name kind fields { name type {…} } } } }`. */
+export function hasuraColumnsFromIntrospection(data: unknown): HasuraColumns {
+  const columns: HasuraColumns = new Map();
+  const types = (data as { __schema?: { types?: unknown[] } })?.__schema?.types ?? [];
+  const baseKind = (t: IntrospectedType): string | undefined => {
+    let cur = t;
+    while (cur?.kind === "NON_NULL") cur = cur.ofType;
+    return cur?.kind;
+  };
+  for (const raw of types) {
+    const t = raw as { name?: string; kind?: string; fields?: { name: string; type: IntrospectedType }[] | null };
+    if (t.kind !== "OBJECT" || !t.name || !t.fields || t.name.startsWith("__")) continue;
+    const scalars = new Set<string>();
+    const objects = new Set<string>();
+    for (const f of t.fields) {
+      const kind = baseKind(f.type);
+      if (kind === "SCALAR" || kind === "ENUM") scalars.add(f.name);
+      else if (kind === "OBJECT") objects.add(f.name);
+    }
+    columns.set(t.name, { scalars, objects });
+  }
+  return columns;
+}
+
 /** Resolve relation→FK remap; Bytes / gotchiverse String columns stay unmapped. */
 function relationFkFor(
   field: string,
   entityType?: string,
   subgraphPath?: string,
 ): string | undefined {
+  const known = entityType ? activeColumns?.get(entityType) : undefined;
+  if (known) {
+    // Schema-driven: only a real object relation with an FK column is remapped.
+    return known.objects.has(field) && known.scalars.has(`${field}_id`) ? `${field}_id` : undefined;
+  }
+  // Schema unknown (introspection unavailable, or a nested selection): the name-based rules below.
   if (isGotchiverseSubgraphPath(subgraphPath)) {
     // Gotchiverse schema uses String address/id columns, not Hasura object relations.
     if (GOTCHIVERSE_STRING_ENTITY_FIELDS.has(field)) return undefined;
