@@ -5,12 +5,14 @@ import { getOrFetchRpc, rpcCacheKey } from "../rpcCache";
 
 function resolveRpcUrl(): string {
   if (process.env.BASE_MAINNET_RPC) return process.env.BASE_MAINNET_RPC;
-  return "https://mainnet.base.org";
+  return "https://aarcadeghst.com/api/base-rpc";
 }
 
+// SVG views are read at latest state: the keyless Base RPCs refuse archive calls
+// or rate-limit heavy ones, and the Aarcade RPC rejects JSON-RPC batches.
 const fetchRequest = new FetchRequest(resolveRpcUrl());
 fetchRequest.timeout = 30_000;
-const provider = new JsonRpcProvider(fetchRequest, undefined, { batchMaxCount: 10, batchStallTime: 25 });
+const provider = new JsonRpcProvider(fetchRequest, 8453, { staticNetwork: true, batchMaxCount: 1 });
 const diamond = new Contract(
   CORE_DIAMOND_ADDRESS,
   aavegotchiDiamondAbi,
@@ -25,9 +27,7 @@ export async function fetchAavegotchiSvg(
     rpcCacheKey("aavegotchiSvg", blockNumber, tokenId),
     async () => {
       try {
-        const result = await diamond.getAavegotchiSvg.staticCall(tokenId, {
-          blockTag: Number(blockNumber),
-        });
+        const result = await diamond.getAavegotchiSvg.staticCall(tokenId);
         return String(result);
       } catch {
         return undefined;
@@ -54,9 +54,7 @@ export async function fetchItemSvgs(
       getOrFetchRpc(rpcCacheKey("itemSvg", svgType, blockNumber, svgId), async () => {
         try {
           const result = String(
-            await diamond.getSvg.staticCall(encodeBytes32String(svgType), svgId, {
-              blockTag: Number(blockNumber),
-            }),
+            await diamond.getSvg.staticCall(encodeBytes32String(svgType), svgId),
           );
           return result || undefined;
         } catch {
@@ -75,9 +73,7 @@ export async function fetchAavegotchiSideSvgs(
     rpcCacheKey("aavegotchiSideSvgs", blockNumber, tokenId),
     async () => {
       try {
-        const result = await diamond.getAavegotchiSideSvgs.staticCall(tokenId, {
-          blockTag: Number(blockNumber),
-        });
+        const result = await diamond.getAavegotchiSideSvgs.staticCall(tokenId);
         return [...result].map((s) => String(s));
       } catch {
         return undefined;
