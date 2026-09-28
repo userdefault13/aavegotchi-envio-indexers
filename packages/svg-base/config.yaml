@@ -8,6 +8,9 @@ contracts:
     events:
       - event: ClaimAavegotchi
       - event: EquipWearables
+      - event: AddItemType
+      - event: UpdateItemType
+      - event: UpdateSvg
       # Transfer: topic-filtered to bridge vault _from only (not all diamond ERC721 transfers)
       - event: Transfer
 networks:

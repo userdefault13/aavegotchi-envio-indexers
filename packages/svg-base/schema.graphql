@@ -5,3 +5,15 @@ type Aavegotchi @entity {
   right: String
   back: String
 }
+
+type ItemType @entity {
+  id: ID!
+  svgId: BigInt!
+  name: String!
+  category: Int!
+  svg: String
+  left: String
+  right: String
+  back: String
+  updatedAtBlock: BigInt!
+}
