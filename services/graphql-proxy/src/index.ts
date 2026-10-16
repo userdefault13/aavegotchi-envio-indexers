@@ -4,6 +4,7 @@ import {
   enrichSocketBridgeTransfers,
   enrichStakingPoolPositions,
 } from "./enrich.js";
+import { isNativeHasuraQuery, prepareNativeHasuraQuery } from "./hasuraNative.js";
 import {
   buildMetaResponse,
   isIntrospectionQuery,
@@ -339,6 +340,29 @@ async function handleGraphql(req: express.Request, res: express.Response) {
       });
       const introJson = await introRes.json();
       res.status(introRes.status).json(introJson);
+      return;
+    }
+
+    // Hasura-syntax callers (limit/offset/order_by/_by_pk/_aggregate) pass through untranslated.
+    if (isNativeHasuraQuery(workingQuery)) {
+      const prepared = prepareNativeHasuraQuery(workingQuery, variables ?? {});
+      if (!prepared.ok) {
+        res.status(prepared.status).json({ errors: [{ message: prepared.message }] });
+        return;
+      }
+      const nativeRes = await fetch(hasuraUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
+        },
+        body: JSON.stringify({ query: prepared.query, variables }),
+      });
+      const nativeJson = (await nativeRes.json()) as { data?: Record<string, unknown> };
+      if (metaBlock != null && nativeJson?.data) {
+        Object.assign(nativeJson.data, buildMetaResponse(metaBlock));
+      }
+      res.status(nativeRes.status).json(nativeJson);
       return;
     }
 
