@@ -25,7 +25,7 @@ jobs:
           npm install
           npx envio codegen
           npm run build
-          node --test build/test/
+          node --test build/test/*.test.js
       - name: Build gotchiverse indexer
         working-directory: packages/gotchiverse-base
         env:

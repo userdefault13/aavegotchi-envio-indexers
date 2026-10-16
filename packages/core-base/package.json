@@ -11,7 +11,7 @@
     "start": "envio start",
     "test": "pnpm mocha",
     "seed:fetch": "node scripts/fetch-gotchi-seed.mjs",
-    "test:seed": "tsc --build && node --test build/test/"
+    "test:seed": "tsc --build && node --test build/test/*.test.js"
   },
   "devDependencies": {
     "@types/node": "20.8.8",
