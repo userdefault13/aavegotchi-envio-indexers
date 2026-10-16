@@ -13,6 +13,7 @@ import {
   prepareNativeHasuraQuery,
 } from "./hasuraNative.js";
 import { startupConfigErrors } from "./startupConfig.js";
+import { enforceModeFromEnv, proxyKeyDecision } from "./proxyKey.js";
 import { HasuraConfigError, hasuraAuthConfigFromEnv, hasuraHeadersFor } from "./hasuraAuth.js";
 import { parse, print, buildClientSchema, getIntrospectionQuery, type GraphQLSchema, type IntrospectionQuery } from "graphql";
 import {
@@ -214,22 +215,18 @@ async function fetchIndexedBlock(hasuraUrl: string): Promise<number> {
 
 const CORS_ALLOW_ORIGIN = process.env.CORS_ALLOW_ORIGIN ?? "*";
 const SUBGRAPH_PROXY_SECRET = String(process.env.SUBGRAPH_PROXY_SECRET || "").trim();
-const SUBGRAPH_PROXY_ENFORCE = String(process.env.SUBGRAPH_PROXY_ENFORCE || "").trim();
-/** warn = log missing key; hard = reject */
-const SUBGRAPH_PROXY_ENFORCE_MODE =
-  SUBGRAPH_PROXY_ENFORCE === "hard" || SUBGRAPH_PROXY_ENFORCE === "1"
-    ? "hard"
-    : SUBGRAPH_PROXY_ENFORCE === "warn"
-      ? "warn"
-      : "";
+const SUBGRAPH_PROXY_ENFORCE_MODE = enforceModeFromEnv();
 
 function assertSubgraphProxyKey(req: express.Request, res: express.Response): boolean {
-  if (!SUBGRAPH_PROXY_SECRET || !SUBGRAPH_PROXY_ENFORCE_MODE) return true;
-  const key = String(req.headers["x-subgraph-proxy-key"] || "").trim();
-  if (key === SUBGRAPH_PROXY_SECRET) return true;
+  const decision = proxyKeyDecision(
+    req.headers["x-subgraph-proxy-key"],
+    SUBGRAPH_PROXY_SECRET,
+    SUBGRAPH_PROXY_ENFORCE_MODE,
+  );
+  if (decision === "allow") return true;
   const msg = "Missing or invalid X-Subgraph-Proxy-Key";
-  if (SUBGRAPH_PROXY_ENFORCE_MODE === "warn") {
-    console.warn("[graphql-proxy] auth warn:", msg, req.ip);
+  if (decision === "warn") {
+    console.warn("[graphql-proxy] auth warn (SUBGRAPH_PROXY_ENFORCE=warn):", msg, req.path, req.ip);
     return true;
   }
   res.status(401).json({ errors: [{ message: msg }] });
@@ -512,6 +509,7 @@ if (startupErrors.length) {
 }
 
 app.listen(PORT, () => {
+  console.log(`  X-Subgraph-Proxy-Key enforcement: ${SUBGRAPH_PROXY_ENFORCE_MODE}`);
   console.log(`GraphQL compat proxy listening on :${PORT}`);
   console.log(`  Hasura: ${HASURA_URL}`);
   if (GV_HASURA_URL) console.log(`  Core Hasura:   ${CORE_HASURA_URL}`);
