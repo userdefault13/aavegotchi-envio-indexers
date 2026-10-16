@@ -1,0 +1,217 @@
+{
+ "source": "userdefault13/cryptoPnL@ed2c61c verify/auth_p0.py",
+ "entities": {
+  "ERC721Listing": {
+   "cursor": "blockCreated",
+   "fields": [
+    "id",
+    "category",
+    "erc721TokenAddress",
+    "tokenId",
+    "seller",
+    "buyer",
+    "priceInWei",
+    "blockCreated",
+    "timeCreated",
+    "timePurchased"
+   ]
+  },
+  "ERC1155Purchase": {
+   "cursor": "timeLastPurchased",
+   "fields": [
+    "id",
+    "listingID",
+    "erc1155TokenAddress",
+    "erc1155TypeId",
+    "seller",
+    "buyer",
+    "recipient",
+    "priceInWei",
+    "quantity",
+    "timeLastPurchased"
+   ]
+  },
+  "ERC1155Listing": {
+   "cursor": "timeCreated",
+   "fields": [
+    "id",
+    "erc1155TokenAddress",
+    "erc1155TypeId",
+    "seller",
+    "priceInWei",
+    "quantity",
+    "sold",
+    "cancelled",
+    "timeCreated",
+    "timeLastPurchased"
+   ]
+  },
+  "ERC721BuyOrder": {
+   "cursor": "createdAt",
+   "fields": [
+    "id",
+    "buyer",
+    "seller",
+    "erc721TokenAddress",
+    "erc721TokenId",
+    "priceInWei",
+    "createdAt",
+    "executedAt",
+    "executedAtBlock",
+    "canceled"
+   ]
+  },
+  "ERC1155BuyOrder": {
+   "cursor": "createdAt",
+   "fields": [
+    "id",
+    "buyer",
+    "erc1155TokenAddress",
+    "erc1155TokenId",
+    "priceInWei",
+    "quantity",
+    "executedQuantity",
+    "createdAt",
+    "lastExecutedAt"
+   ]
+  },
+  "ERC1155BuyOrderExecution": {
+   "cursor": "executedAt",
+   "fields": [
+    "id",
+    "buyOrder_id",
+    "buyer",
+    "seller",
+    "erc1155TokenId",
+    "priceInWei",
+    "executedQuantity",
+    "executedAt"
+   ]
+  },
+  "Auction": {
+   "cursor": "createdAt",
+   "fields": [
+    "id",
+    "contractAddress",
+    "tokenId",
+    "seller",
+    "highestBid",
+    "highestBidder",
+    "totalBids",
+    "createdAt",
+    "endsAt",
+    "claimed",
+    "isBought"
+   ]
+  },
+  "Bid": {
+   "cursor": "bidTime",
+   "fields": [
+    "id",
+    "auctionID",
+    "bidder",
+    "amount",
+    "bidTime",
+    "outbid"
+   ]
+  },
+  "Auction_BidPlaced": {
+   "cursor": "timestamp",
+   "fields": [
+    "id",
+    "auctionId",
+    "bidder",
+    "bidAmount",
+    "timestamp",
+    "transaction_id",
+    "emitter_id"
+   ]
+  },
+  "Auction_BoughtNow": {
+   "cursor": "timestamp",
+   "fields": [
+    "id",
+    "auctionId",
+    "timestamp",
+    "transaction_id"
+   ]
+  },
+  "Auction_ItemClaimed": {
+   "cursor": "timestamp",
+   "fields": [
+    "id",
+    "auctionId",
+    "timestamp",
+    "transaction_id"
+   ]
+  }
+ },
+ "queries": [
+  {
+   "entity": "ERC721Listing",
+   "query": "{ ERC721Listing(limit: 2, order_by: {blockCreated: desc_nulls_last}, where: {timePurchased: {_gt: \"0\"}}) { id category erc721TokenAddress tokenId seller buyer priceInWei blockCreated timeCreated timePurchased } }",
+   "expectLimit": 2
+  },
+  {
+   "entity": "ERC1155Purchase",
+   "query": "{ ERC1155Purchase(limit: 2, order_by: {timeLastPurchased: desc_nulls_last}) { id listingID erc1155TokenAddress erc1155TypeId seller buyer recipient priceInWei quantity timeLastPurchased } }",
+   "expectLimit": 2
+  },
+  {
+   "entity": "ERC1155Listing",
+   "query": "{ ERC1155Listing(limit: 2, order_by: {timeCreated: desc_nulls_last}) { id erc1155TokenAddress erc1155TypeId seller priceInWei quantity sold cancelled timeCreated timeLastPurchased } }",
+   "expectLimit": 2
+  },
+  {
+   "entity": "ERC721BuyOrder",
+   "query": "{ ERC721BuyOrder(limit: 2, order_by: {createdAt: desc_nulls_last}) { id buyer seller erc721TokenAddress erc721TokenId priceInWei createdAt executedAt executedAtBlock canceled } }",
+   "expectLimit": 2
+  },
+  {
+   "entity": "ERC1155BuyOrder",
+   "query": "{ ERC1155BuyOrder(limit: 2, order_by: {createdAt: desc_nulls_last}) { id buyer erc1155TokenAddress erc1155TokenId priceInWei quantity executedQuantity createdAt lastExecutedAt } }",
+   "expectLimit": 2
+  },
+  {
+   "entity": "ERC1155BuyOrderExecution",
+   "query": "{ ERC1155BuyOrderExecution(limit: 2, order_by: {executedAt: desc_nulls_last}) { id buyOrder_id buyer seller erc1155TokenId priceInWei executedQuantity executedAt } }",
+   "expectLimit": 2
+  },
+  {
+   "entity": "Auction",
+   "query": "{ Auction(limit: 2, order_by: {createdAt: desc_nulls_last}) { id contractAddress tokenId seller highestBid highestBidder totalBids createdAt endsAt claimed isBought } }",
+   "expectLimit": 2
+  },
+  {
+   "entity": "Bid",
+   "query": "{ Bid(limit: 2, order_by: {bidTime: desc_nulls_last}) { id auctionID bidder amount bidTime outbid } }",
+   "expectLimit": 2
+  },
+  {
+   "entity": "Auction_BidPlaced",
+   "query": "{ Auction_BidPlaced(limit: 2, order_by: {timestamp: desc_nulls_last}) { id auctionId bidder bidAmount timestamp transaction_id emitter_id } }",
+   "expectLimit": 2
+  },
+  {
+   "entity": "Auction_BoughtNow",
+   "query": "{ Auction_BoughtNow(limit: 2, order_by: {timestamp: desc_nulls_last}) { id auctionId timestamp transaction_id } }",
+   "expectLimit": 2
+  },
+  {
+   "entity": "Auction_ItemClaimed",
+   "query": "{ Auction_ItemClaimed(limit: 2, order_by: {timestamp: desc_nulls_last}) { id auctionId timestamp transaction_id } }",
+   "expectLimit": 2
+  },
+  {
+   "entity": "Auction_BidPlaced",
+   "query": "{ Auction_BidPlaced(limit: 8, order_by: {timestamp: desc_nulls_last}, offset: 2) { transaction_id timestamp } }",
+   "expectLimit": 8,
+   "expectOffset": 2
+  },
+  {
+   "entity": "Auction",
+   "query": "{ Auction(where: {id: {_eq: \"1\"}}) { id highestBid totalBids claimed } }",
+   "expectLimit": 100
+  }
+ ]
+}
