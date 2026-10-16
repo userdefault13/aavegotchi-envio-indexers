@@ -13,6 +13,10 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
+      # envio codegen shells out to pnpm; pin it so a new pnpm release can't change build-script policy under us.
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 12.14.0
       - name: Build core indexer
         working-directory: packages/core-base
         env:
