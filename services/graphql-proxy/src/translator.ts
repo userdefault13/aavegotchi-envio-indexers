@@ -843,8 +843,13 @@ export function translateSubgraphToHasura(
     throw new Error("Unsupported query: no recognized root field");
   }
 
-  const limit = fieldArgs.first ?? fieldArgs.last ?? 100;
-  const offset = fieldArgs.skip ?? 0;
+  const rawLimit = fieldArgs.first ?? fieldArgs.last;
+  const limit =
+    typeof rawLimit === "number" && Number.isInteger(rawLimit) && rawLimit >= 0
+      ? Math.min(rawLimit, 1000)
+      : 100;
+  const rawSkip = fieldArgs.skip;
+  const offset = typeof rawSkip === "number" && Number.isInteger(rawSkip) && rawSkip >= 0 ? rawSkip : 0;
   let where = transformWhere(
     fieldArgs.where as Record<string, unknown> | undefined,
     rootField,

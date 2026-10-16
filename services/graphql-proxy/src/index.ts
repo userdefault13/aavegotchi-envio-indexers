@@ -5,12 +5,15 @@ import {
   enrichStakingPoolPositions,
 } from "./enrich.js";
 import {
+  capsFromEnv,
+  checkShape,
   containsIntrospectionField,
   isNativeHasuraQuery,
+  selectOperation,
   prepareNativeHasuraQuery,
 } from "./hasuraNative.js";
 import { HasuraConfigError, hasuraAuthConfigFromEnv, hasuraHeadersFor } from "./hasuraAuth.js";
-import { buildClientSchema, getIntrospectionQuery, type GraphQLSchema, type IntrospectionQuery } from "graphql";
+import { parse, print, buildClientSchema, getIntrospectionQuery, type GraphQLSchema, type IntrospectionQuery } from "graphql";
 import {
   buildMetaResponse,
   isIntrospectionQuery,
@@ -35,6 +38,7 @@ const HASURA_URL =
   process.env.CORE_HASURA_URL ??
   "http://127.0.0.1:8080/v1/graphql";
 const HASURA_AUTH = hasuraAuthConfigFromEnv();
+const QUERY_CAPS = capsFromEnv();
 
 /** Split-stack Hasura endpoints (core, gotchiverse, svg, portal). */
 const GV_HASURA_URL = process.env.GV_HASURA_URL;
@@ -304,9 +308,10 @@ function stripMetaSelection(query: string): { withoutMeta: string; onlyMeta: boo
 async function handleGraphql(req: express.Request, res: express.Response) {
   if (!assertSubgraphProxyKey(req, res)) return;
   try {
-    const { query, variables } = req.body as {
+    const { query, variables, operationName } = req.body as {
       query?: string;
       variables?: Record<string, unknown>;
+      operationName?: string;
     };
     if (!query) {
       res.status(400).json({ errors: [{ message: "Missing query" }] });
@@ -353,9 +358,12 @@ async function handleGraphql(req: express.Request, res: express.Response) {
     }
 
     // Hasura-syntax callers (limit/offset/order_by/_by_pk/_aggregate) pass through untranslated.
-    if (isNativeHasuraQuery(workingQuery)) {
+    if (isNativeHasuraQuery(workingQuery, variables ?? {}, operationName)) {
       const schema = await publicSchemaFor(hasuraUrl);
-      const prepared = prepareNativeHasuraQuery(workingQuery, variables ?? {}, schema);
+      const prepared = prepareNativeHasuraQuery(workingQuery, variables ?? {}, schema, {
+        operationName,
+        caps: QUERY_CAPS,
+      });
       if (!prepared.ok) {
         res.status(prepared.status).json({ errors: [{ message: prepared.message }] });
         return;
@@ -363,7 +371,11 @@ async function handleGraphql(req: express.Request, res: express.Response) {
       const nativeRes = await fetch(hasuraUrl, {
         method: "POST",
         headers: hasuraHeadersFor(hasuraUrl, HASURA_AUTH),
-        body: JSON.stringify({ query: prepared.query, variables }),
+        body: JSON.stringify({
+          query: prepared.query,
+          variables: prepared.variables,
+          ...(prepared.operationName ? { operationName: prepared.operationName } : {}),
+        }),
       });
       const nativeJson = (await nativeRes.json()) as { data?: Record<string, unknown> };
       if (metaBlock != null && nativeJson?.data) {
@@ -373,6 +385,21 @@ async function handleGraphql(req: express.Request, res: express.Response) {
       return;
     }
 
+    // Translator (The Graph syntax) path: same denylist/depth/root caps on the input...
+    {
+      let parsedDoc;
+      try { parsedDoc = parse(workingQuery); } catch (e) {
+        res.status(400).json({ errors: [{ message: `Invalid GraphQL: ${(e as Error).message}` }] });
+        return;
+      }
+      const sel = selectOperation(parsedDoc, operationName);
+      const shapeErr = sel.ok ? checkShape(sel.doc, sel.op, QUERY_CAPS) : sel.message;
+      if (shapeErr || !sel.ok) {
+        res.status(400).json({ errors: [{ message: shapeErr }] });
+        return;
+      }
+      workingQuery = print(sel.doc); // translator sees only the selected operation
+    }
     const fieldMap = rootFieldMapForSubgraphPath(req.path);
     const columns = await hasuraColumnsFor(hasuraUrl);
     const {
@@ -384,7 +411,15 @@ async function handleGraphql(req: express.Request, res: express.Response) {
     } = withHasuraColumns(columns, () =>
       translateSubgraphToHasura(workingQuery, variables ?? {}, fieldMap, req.path),
     );
-    const hasuraData = await queryHasura(hasuraUrl, hasuraQuery);
+    // ...and the generated Hasura query is clamped/validated like a native one (root + nested lists).
+    const clamped = prepareNativeHasuraQuery(hasuraQuery, {}, await publicSchemaFor(hasuraUrl), {
+      caps: { maxDepth: QUERY_CAPS.maxDepth + 2, maxRootFields: QUERY_CAPS.maxRootFields },
+    });
+    if (!clamped.ok) {
+      res.status(clamped.status).json({ errors: [{ message: clamped.message }] });
+      return;
+    }
+    const hasuraData = await queryHasura(hasuraUrl, clamped.query);
     let rows: unknown = hasuraData[rootField];
     const q = (subquery: string) => queryHasura(hasuraUrl, subquery);
 

@@ -1,9 +1,10 @@
 /**
- * Headers for data/introspection fetches to Hasura. Data never runs as admin:
- * - mode "unauthorized-role" (HASURA_PUBLIC_AUTH=unauthorized-role): no admin secret at all; Hasura
- *   must have HASURA_GRAPHQL_UNAUTHORIZED_ROLE=public.
- * - default "secret-with-role": admin secret + x-hasura-role: public, so Hasura applies the public
- *   role's permissions (admin role is never used).
+ * Headers for every Hasura fetch (data, schema introspection cache, chain_metadata, enrich).
+ * - default "unauthorized-role": NO admin secret is sent anywhere. Hasura runs the request as
+ *   HASURA_GRAPHQL_UNAUTHORIZED_ROLE=public (confirmed on all 5 engines). The proxy then needs
+ *   no admin secret at all, at startup or at runtime.
+ * - opt-in "secret-with-role" (HASURA_PUBLIC_AUTH=secret-with-role): legacy fallback for an engine
+ *   without an unauthorized role; admin secret + x-hasura-role: public.
  * Fails closed: if the secret is required and unset, throws HasuraConfigError (handler → 503).
  * There is no "testing" fallback.
  */
@@ -20,7 +21,7 @@ export const PUBLIC_ROLE = "public";
 
 export function hasuraAuthConfigFromEnv(env: NodeJS.ProcessEnv = process.env): HasuraAuthConfig {
   return {
-    mode: env.HASURA_PUBLIC_AUTH === "unauthorized-role" ? "unauthorized-role" : "secret-with-role",
+    mode: env.HASURA_PUBLIC_AUTH === "secret-with-role" ? "secret-with-role" : "unauthorized-role",
     adminSecret: String(env.HASURA_ADMIN_SECRET ?? env.HASURA_GRAPHQL_ADMIN_SECRET ?? "").trim(),
     cryptopnlUrl: env.CRYPTOPNL_HASURA_URL || undefined,
     cryptopnlAdminSecret: String(env.CRYPTOPNL_HASURA_ADMIN_SECRET ?? "").trim(),
