@@ -12,6 +12,7 @@ import {
   selectOperation,
   prepareNativeHasuraQuery,
 } from "./hasuraNative.js";
+import { startupConfigErrors } from "./startupConfig.js";
 import { HasuraConfigError, hasuraAuthConfigFromEnv, hasuraHeadersFor } from "./hasuraAuth.js";
 import { parse, print, buildClientSchema, getIntrospectionQuery, type GraphQLSchema, type IntrospectionQuery } from "graphql";
 import {
@@ -504,8 +505,9 @@ for (const subgraph of SUBGRAPH_PATHS) {
 }
 app.post("/", handleGraphql);
 
-if (HASURA_AUTH.mode === "secret-with-role" && !HASURA_AUTH.adminSecret) {
-  console.error("[graphql-proxy] HASURA_ADMIN_SECRET is unset; refusing to start (set it, or HASURA_PUBLIC_AUTH=unauthorized-role)");
+const startupErrors = startupConfigErrors(process.env, HASURA_AUTH);
+if (startupErrors.length) {
+  for (const e of startupErrors) console.error(`[graphql-proxy] FATAL: ${e}`);
   process.exit(1);
 }
 
