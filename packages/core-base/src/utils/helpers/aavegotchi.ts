@@ -14,6 +14,7 @@ import {
 } from "../contractEffects";
 import { itemMaxQuantityToRarity } from "../decimals";
 import { toAddressId } from "../ids";
+import { applyGotchiSeed } from "../polygonSeed";
 import type { BlockRef } from "../event";
 
 export type Context = HandlerContext;
@@ -246,7 +247,7 @@ export async function getOrCreateAavegotchi(
   if (existing) return existing;
   if (!createIfNotFound) return undefined;
 
-  let gotchi = defaultAavegotchi(id, block.number);
+  let gotchi = applyGotchiSeed(id, defaultAavegotchi(id, block.number));
   gotchi = await updateAavegotchiInfo(context, gotchi, BigInt(id), block);
   context.Aavegotchi.set(gotchi);
   return gotchi;
