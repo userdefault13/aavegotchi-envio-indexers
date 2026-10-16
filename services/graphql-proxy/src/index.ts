@@ -4,7 +4,13 @@ import {
   enrichSocketBridgeTransfers,
   enrichStakingPoolPositions,
 } from "./enrich.js";
-import { isNativeHasuraQuery, prepareNativeHasuraQuery } from "./hasuraNative.js";
+import {
+  containsIntrospectionField,
+  isNativeHasuraQuery,
+  prepareNativeHasuraQuery,
+} from "./hasuraNative.js";
+import { HasuraConfigError, hasuraAuthConfigFromEnv, hasuraHeadersFor } from "./hasuraAuth.js";
+import { buildClientSchema, getIntrospectionQuery, type GraphQLSchema, type IntrospectionQuery } from "graphql";
 import {
   buildMetaResponse,
   isIntrospectionQuery,
@@ -28,10 +34,7 @@ const HASURA_URL =
   process.env.HASURA_URL ??
   process.env.CORE_HASURA_URL ??
   "http://127.0.0.1:8080/v1/graphql";
-const HASURA_ADMIN_SECRET =
-  process.env.HASURA_ADMIN_SECRET ??
-  process.env.HASURA_GRAPHQL_ADMIN_SECRET ??
-  "testing";
+const HASURA_AUTH = hasuraAuthConfigFromEnv();
 
 /** Split-stack Hasura endpoints (core, gotchiverse, svg, portal). */
 const GV_HASURA_URL = process.env.GV_HASURA_URL;
@@ -46,10 +49,6 @@ const ACARTRIDGE_HASURA_URL = process.env.ACARTRIDGE_HASURA_URL;
 const CORE_HASURA_URL = process.env.CORE_HASURA_URL ?? HASURA_URL;
 /** cryptoPnL tokens indexer on omarchywin (own Hasura + admin secret). */
 const CRYPTOPNL_HASURA_URL = process.env.CRYPTOPNL_HASURA_URL;
-const CRYPTOPNL_HASURA_ADMIN_SECRET = process.env.CRYPTOPNL_HASURA_ADMIN_SECRET ?? "";
-function adminSecretFor(url: string): string {
-  return CRYPTOPNL_HASURA_URL && url === CRYPTOPNL_HASURA_URL ? CRYPTOPNL_HASURA_ADMIN_SECRET : HASURA_ADMIN_SECRET;
-}
 
 const SUBGRAPH_PATHS = [
   "aavegotchi-core-base",
@@ -121,11 +120,7 @@ async function queryHasura(
 ): Promise<Record<string, unknown>> {
   const res = await fetch(url, {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-hasura-admin-secret": adminSecretFor(url),
-      "x-hasura-role": "public",
-    },
+    headers: hasuraHeadersFor(url, HASURA_AUTH),
     body: JSON.stringify({ query: hasuraQuery }),
   });
   if (!res.ok) {
@@ -164,6 +159,18 @@ async function hasuraColumnsFor(hasuraUrl: string): Promise<HasuraColumns | null
     columnsCache.set(hasuraUrl, { at: Date.now(), ttl: COLUMNS_RETRY_MS, columns: cached?.columns ?? null });
     return cached?.columns ?? null;
   }
+}
+
+/** Public-role schema per endpoint, for validating/clamping native queries. */
+const SCHEMA_TTL_MS = 10 * 60_000;
+const schemaCache = new Map<string, { at: number; schema: GraphQLSchema }>();
+async function publicSchemaFor(hasuraUrl: string): Promise<GraphQLSchema> {
+  const cached = schemaCache.get(hasuraUrl);
+  if (cached && Date.now() - cached.at < SCHEMA_TTL_MS) return cached.schema;
+  const data = await queryHasura(hasuraUrl, getIntrospectionQuery());
+  const schema = buildClientSchema(data as unknown as IntrospectionQuery);
+  schemaCache.set(hasuraUrl, { at: Date.now(), schema });
+  return schema;
 }
 
 const CHAIN_META_QUERY = `{
@@ -331,11 +338,7 @@ async function handleGraphql(req: express.Request, res: express.Response) {
     if (isIntrospectionQuery(workingQuery)) {
       const introRes = await fetch(hasuraUrl, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-hasura-admin-secret": adminSecretFor(hasuraUrl),
-          "x-hasura-role": "public",
-        },
+        headers: hasuraHeadersFor(hasuraUrl, HASURA_AUTH),
         body: JSON.stringify({ query: workingQuery, variables }),
       });
       const introJson = await introRes.json();
@@ -343,19 +346,23 @@ async function handleGraphql(req: express.Request, res: express.Response) {
       return;
     }
 
+    // Introspection is only served as a pure introspection document (above, public role).
+    if (containsIntrospectionField(workingQuery)) {
+      res.status(400).json({ errors: [{ message: "Introspection fields (__schema/__type) are not allowed in data queries" }] });
+      return;
+    }
+
     // Hasura-syntax callers (limit/offset/order_by/_by_pk/_aggregate) pass through untranslated.
     if (isNativeHasuraQuery(workingQuery)) {
-      const prepared = prepareNativeHasuraQuery(workingQuery, variables ?? {});
+      const schema = await publicSchemaFor(hasuraUrl);
+      const prepared = prepareNativeHasuraQuery(workingQuery, variables ?? {}, schema);
       if (!prepared.ok) {
         res.status(prepared.status).json({ errors: [{ message: prepared.message }] });
         return;
       }
       const nativeRes = await fetch(hasuraUrl, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
-        },
+        headers: hasuraHeadersFor(hasuraUrl, HASURA_AUTH),
         body: JSON.stringify({ query: prepared.query, variables }),
       });
       const nativeJson = (await nativeRes.json()) as { data?: Record<string, unknown> };
@@ -442,6 +449,11 @@ async function handleGraphql(req: express.Request, res: express.Response) {
     }
     res.json({ data });
   } catch (err) {
+    if (err instanceof HasuraConfigError) {
+      console.error("[graphql-proxy] misconfigured:", err.message);
+      res.status(503).json({ errors: [{ message: "Subgraph backend not configured" }] });
+      return;
+    }
     const base = err instanceof Error ? err.message : String(err);
     const cause =
       err instanceof Error && err.cause instanceof Error
@@ -456,6 +468,11 @@ for (const subgraph of SUBGRAPH_PATHS) {
   app.post(`/subgraphs/name/${subgraph}/*`, handleGraphql);
 }
 app.post("/", handleGraphql);
+
+if (HASURA_AUTH.mode === "secret-with-role" && !HASURA_AUTH.adminSecret) {
+  console.error("[graphql-proxy] HASURA_ADMIN_SECRET is unset; refusing to start (set it, or HASURA_PUBLIC_AUTH=unauthorized-role)");
+  process.exit(1);
+}
 
 app.listen(PORT, () => {
   console.log(`GraphQL compat proxy listening on :${PORT}`);
