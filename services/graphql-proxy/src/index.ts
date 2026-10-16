@@ -7,6 +7,7 @@ import {
 import {
   buildMetaResponse,
   isIntrospectionQuery,
+  queryOnlyError,
   mapAlchemicaRowsForSubgraph,
   mapGbmRowsForSubgraph,
   mapGotchiverseStringEntities,
@@ -42,6 +43,12 @@ const GBM_HASURA_URL = process.env.GBM_HASURA_URL;
 const CARTRIDGE_HASURA_URL = process.env.CARTRIDGE_HASURA_URL;
 const ACARTRIDGE_HASURA_URL = process.env.ACARTRIDGE_HASURA_URL;
 const CORE_HASURA_URL = process.env.CORE_HASURA_URL ?? HASURA_URL;
+/** cryptoPnL tokens indexer on omarchywin (own Hasura + admin secret). */
+const CRYPTOPNL_HASURA_URL = process.env.CRYPTOPNL_HASURA_URL;
+const CRYPTOPNL_HASURA_ADMIN_SECRET = process.env.CRYPTOPNL_HASURA_ADMIN_SECRET ?? "";
+function adminSecretFor(url: string): string {
+  return CRYPTOPNL_HASURA_URL && url === CRYPTOPNL_HASURA_URL ? CRYPTOPNL_HASURA_ADMIN_SECRET : HASURA_ADMIN_SECRET;
+}
 
 const SUBGRAPH_PATHS = [
   "aavegotchi-core-base",
@@ -54,9 +61,11 @@ const SUBGRAPH_PATHS = [
   "aavegotchi-gltr-staking-base",
   "aarcade-cartridge-base",
   "aarcade-acartridge-base",
+  "cryptopnl-tokens-base",
 ] as const;
 
 function resolveHasuraUrl(path: string, query: string): string {
+  if (path.includes("cryptopnl-tokens-base") && CRYPTOPNL_HASURA_URL) return CRYPTOPNL_HASURA_URL;
   // aCartridge (agents) — checked first: "aarcade-acartridge-base" also matches "cartridge-base" below
   if (path.includes("acartridge") && ACARTRIDGE_HASURA_URL) {
     return ACARTRIDGE_HASURA_URL;
@@ -113,7 +122,8 @@ async function queryHasura(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
+      "x-hasura-admin-secret": adminSecretFor(url),
+      "x-hasura-role": "public",
     },
     body: JSON.stringify({ query: hasuraQuery }),
   });
@@ -294,6 +304,12 @@ async function handleGraphql(req: express.Request, res: express.Response) {
       res.status(400).json({ errors: [{ message: "Missing query" }] });
       return;
     }
+    const readOnlyErr = queryOnlyError(query);
+    if (readOnlyErr) {
+      console.warn("[graphql-proxy] rejected non-query:", readOnlyErr.slice(0, 120), req.path, req.ip);
+      res.status(400).json({ errors: [{ message: readOnlyErr }] });
+      return;
+    }
 
     const hasuraUrl = resolveHasuraUrl(req.path, query);
 
@@ -316,7 +332,8 @@ async function handleGraphql(req: express.Request, res: express.Response) {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-hasura-admin-secret": HASURA_ADMIN_SECRET,
+          "x-hasura-admin-secret": adminSecretFor(hasuraUrl),
+          "x-hasura-role": "public",
         },
         body: JSON.stringify({ query: workingQuery, variables }),
       });

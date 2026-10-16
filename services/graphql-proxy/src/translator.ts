@@ -204,7 +204,19 @@ const CARTRIDGE_ROOT_FIELD_MAP: Record<string, string> = {
   licenses: "License",
 };
 
+const CRYPTOPNL_ROOT_FIELD_MAP: Record<string, string> = {
+  token: "Token", tokens: "Token",
+  pool: "Pool", pools: "Pool",
+  tokenTransfer: "TokenTransfer", tokenTransfers: "TokenTransfer",
+  swap: "Swap", swaps: "Swap",
+  accountBalance: "AccountBalance", accountBalances: "AccountBalance",
+  tokenPrice: "TokenPrice", tokenPrices: "TokenPrice",
+};
+
 export function rootFieldMapForSubgraphPath(path: string): Record<string, string> {
+  if (path.includes("cryptopnl-tokens-base")) {
+    return { ...ROOT_FIELD_MAP, ...CRYPTOPNL_ROOT_FIELD_MAP };
+  }
   if (path.includes("aarcade-cartridge") || path.includes("cartridge-base")) {
     return { ...ROOT_FIELD_MAP, ...CARTRIDGE_ROOT_FIELD_MAP };
   }
@@ -926,7 +938,31 @@ export function wrapHasuraResponse(
 
 /** Introspection passthrough for schema checks */
 export function isIntrospectionQuery(query: string): boolean {
-  return query.includes("__schema") || query.includes("__type");
+  // AST-based: introspection only when every root field of every operation is __schema/__type/__typename.
+  let doc: DocumentNode;
+  try { doc = parse(query); } catch { return false; }
+  let sawField = false;
+  for (const def of doc.definitions) {
+    if (def.kind !== "OperationDefinition") continue;
+    for (const sel of def.selectionSet.selections) {
+      if (sel.kind !== "Field") return false;
+      if (!["__schema", "__type", "__typename"].includes(sel.name.value)) return false;
+      if (sel.name.value !== "__typename") sawField = true;
+    }
+  }
+  return sawField;
+}
+
+/** Read-only gate: only `query` operations (plus fragments). Returns an error message or null. */
+export function queryOnlyError(query: string): string | null {
+  let doc: DocumentNode;
+  try { doc = parse(query); } catch (e) { return `GraphQL parse error: ${(e as Error).message}`; }
+  for (const def of doc.definitions) {
+    if (def.kind === "FragmentDefinition") continue;
+    if (def.kind !== "OperationDefinition") return "Only executable query documents are allowed";
+    if (def.operation !== "query") return `Operation type '${def.operation}' is not allowed (read-only)`;
+  }
+  return null;
 }
 
 export function buildMetaResponse(
