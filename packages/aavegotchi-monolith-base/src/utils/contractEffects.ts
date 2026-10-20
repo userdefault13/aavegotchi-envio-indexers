@@ -7,6 +7,17 @@ import {
 } from "./constants";
 import { getOrFetchRpc, rpcCacheKey } from "./rpcCache";
 
+/**
+ * A contract revert (e.g. a token that doesn't exist yet) or empty return data means "no data".
+ * Anything else (unreachable RPC, timeout, rate limit) is rethrown so the indexer stops and retries
+ * instead of silently writing entities without chain data.
+ */
+function noDataOnRevert(err: unknown): undefined {
+  const code = (err as { code?: string } | null)?.code;
+  if (code === "CALL_EXCEPTION" || code === "BAD_DATA") return undefined;
+  throw err;
+}
+
 function resolveRpcUrl(): string {
   if (process.env.BASE_MAINNET_RPC) return process.env.BASE_MAINNET_RPC;
   return "https://mainnet.base.org";
@@ -18,7 +29,13 @@ const RPC_TIMEOUT_MS = 15_000;
 function createProvider(): JsonRpcProvider {
   const fetchRequest = new FetchRequest(RPC_URL);
   fetchRequest.timeout = RPC_TIMEOUT_MS;
-  return new JsonRpcProvider(fetchRequest, undefined, { batchMaxCount: 10, batchStallTime: 25 });
+  return new JsonRpcProvider(fetchRequest, 8453, {
+    // Base only. A static network skips startup detection, which retries forever on a dead RPC
+    // instead of failing the call.
+    staticNetwork: true,
+    batchMaxCount: 10,
+    batchStallTime: 25,
+  });
 }
 
 const provider = createProvider();
@@ -145,8 +162,8 @@ async function fetchAavegotchiUncached(
       modifiedRarityScore: toBigInt(result.modifiedRarityScore),
       locked: Boolean(result.locked),
     };
-  } catch {
-    return undefined;
+  } catch (err) {
+    return noDataOnRevert(err);
   }
 }
 
@@ -178,8 +195,8 @@ async function fetchERC721ListingUncached(
       priceInWei: toBigInt(result.priceInWei),
       cancelled: Boolean(result.cancelled),
     };
-  } catch {
-    return undefined;
+  } catch (err) {
+    return noDataOnRevert(err);
   }
 }
 
@@ -213,8 +230,8 @@ async function fetchERC1155ListingUncached(
       cancelled: Boolean(result.cancelled),
       quantity: toBigInt(result.quantity),
     };
-  } catch {
-    return undefined;
+  } catch (err) {
+    return noDataOnRevert(err);
   }
 }
 
@@ -245,8 +262,8 @@ async function fetchParcelInfoUncached(
       boost: [...result.boost].map(toBigInt),
       size: toBigInt(result.size),
     };
-  } catch {
-    return undefined;
+  } catch (err) {
+    return noDataOnRevert(err);
   }
 }
 
@@ -273,8 +290,8 @@ async function fetchWhitelistUncached(
       name: result.name,
       addresses: [...result.addresses].map((a) => String(a).toLowerCase()),
     };
-  } catch {
-    return undefined;
+  } catch (err) {
+    return noDataOnRevert(err);
   }
 }
 
@@ -298,8 +315,8 @@ async function findWearableSetsUncached(
       { blockTag: Number(blockNumber) },
     );
     return [...result].map(Number);
-  } catch {
-    return undefined;
+  } catch (err) {
+    return noDataOnRevert(err);
   }
 }
 
@@ -331,8 +348,8 @@ async function fetchWearableSetsUncached(
       wearableIds: [...set.wearableIds].map(Number),
       traitsBonuses: [...set.traitsBonuses].map(Number),
     }));
-  } catch {
-    return undefined;
+  } catch (err) {
+    return noDataOnRevert(err);
   }
 }
 
@@ -362,8 +379,8 @@ async function fetchWearablesConfigUncached(
       name: result.name,
       wearables: [...result.wearables].map(Number),
     };
-  } catch {
-    return undefined;
+  } catch (err) {
+    return noDataOnRevert(err);
   }
 }
 
