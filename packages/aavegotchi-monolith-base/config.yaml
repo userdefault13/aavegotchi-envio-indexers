@@ -8,6 +8,7 @@ contracts:
     events:
       - event: Transfer
       - event: ClaimAavegotchi
+      - event: ResyncAavegotchis
       - event: ERC721ListingAdd
       - event: ERC721ExecutedListing
       - event: ERC721ListingCancelled
