@@ -27,7 +27,7 @@ const RPC_URL = resolveRpcUrl();
 const RPC_TIMEOUT_MS = 30_000;
 const RPC_ATTEMPTS = Number(process.env.RPC_ATTEMPTS || 5);
 const RPC_RETRY_BASE_MS = Number(process.env.RPC_RETRY_BASE_MS || 2_000);
-const TRANSIENT_CODES = new Set(["TIMEOUT", "SERVER_ERROR", "NETWORK_ERROR"]);
+const TRANSIENT_CODES = new Set(["TIMEOUT", "SERVER_ERROR", "NETWORK_ERROR", "ECONNRESET"]);
 
 /**
  * Retries transient transport failures (timeouts, 5xx, dropped connections) with backoff. Historical
@@ -40,8 +40,10 @@ class RetryingJsonRpcProvider extends JsonRpcProvider {
       try {
         return await super._send(payload);
       } catch (err) {
-        const code = (err as { code?: string } | null)?.code;
-        if (attempt >= RPC_ATTEMPTS || !code || !TRANSIENT_CODES.has(code)) throw err;
+        const { code, message } = (err ?? {}) as { code?: string; message?: string };
+        const transient =
+          (code !== undefined && TRANSIENT_CODES.has(code)) || /socket hang up/i.test(message ?? "");
+        if (attempt >= RPC_ATTEMPTS || !transient) throw err;
         await new Promise((r) => setTimeout(r, RPC_RETRY_BASE_MS * attempt));
       }
     }
