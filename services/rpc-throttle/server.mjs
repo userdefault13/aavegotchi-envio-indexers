@@ -8,7 +8,8 @@
  * Point an indexer's BASE_MAINNET_RPC at http://host.docker.internal:8799. The upstream URL (which
  * usually carries the account key) stays in this process's environment and is never logged.
  * RPC_RPS counts upstream HTTP requests, retries included; a JSON-RPC batch is one request.
- * Upstream 429s pause every request for RPC_429_PAUSE_MS before retrying.
+ * Upstream 429s pause every request for RPC_429_PAUSE_MS before retrying; timeouts, network errors
+ * and 5xx are retried RPC_MAX_RETRIES times.
  */
 import http from "node:http";
 
@@ -21,7 +22,10 @@ const RPS = Math.max(0.1, Number(process.env.RPC_RPS || 5));
 const PORT = Number(process.env.RPC_PORT || 8799);
 const BINDS = (process.env.RPC_BIND || "127.0.0.1,172.17.0.1").split(",").map((s) => s.trim()).filter(Boolean);
 const MAX_BODY_BYTES = Number(process.env.RPC_MAX_BODY_BYTES || 1_000_000);
-const UPSTREAM_TIMEOUT_MS = Number(process.env.RPC_UPSTREAM_TIMEOUT_MS || 30_000);
+// Per attempt. Keep (RETRIES + 1) × timeout under the client's own timeout (the indexers use 15 s),
+// so a hung upstream request is retried here instead of failing the client.
+const UPSTREAM_TIMEOUT_MS = Number(process.env.RPC_UPSTREAM_TIMEOUT_MS || 4_000);
+const MAX_RETRIES = Number(process.env.RPC_MAX_RETRIES || 2);
 const MAX_429_RETRIES = Number(process.env.RPC_MAX_429_RETRIES || 6);
 const PAUSE_MS = Number(process.env.RPC_429_PAUSE_MS || 5_000);
 // Spacing strictly above 1000/RPS, measured between actual starts, so no 1 s window holds more than RPS.
@@ -30,7 +34,7 @@ const SPACING_MS = Math.floor(1000 / RPS) + 1;
 let lastStartAt = 0;
 let pausedUntil = 0;
 let queue = Promise.resolve();
-const stats = { requests: 0, upstream: 0, upstream429: 0, errors: 0, waiting: 0 };
+const stats = { requests: 0, upstream: 0, upstream429: 0, retries: 0, errors: 0, waiting: 0 };
 
 /** Wait for this request's turn: starts are serialized and spaced from the previous actual start. */
 function takeSlot() {
@@ -49,21 +53,34 @@ function takeSlot() {
 }
 
 async function forward(body) {
+  let failures = 0;
   for (let attempt = 0; ; attempt++) {
     await takeSlot();
     stats.upstream++;
-    const res = await fetch(UPSTREAM, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body,
-      signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
-    });
-    if (res.status === 429 && attempt < MAX_429_RETRIES) {
-      stats.upstream429++;
-      pausedUntil = Math.max(pausedUntil, Date.now() + PAUSE_MS * (attempt + 1));
-      continue;
+    try {
+      const res = await fetch(UPSTREAM, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body,
+        signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+      });
+      if (res.status === 429 && attempt < MAX_429_RETRIES) {
+        stats.upstream429++;
+        pausedUntil = Math.max(pausedUntil, Date.now() + PAUSE_MS * (attempt + 1));
+        continue;
+      }
+      if (res.status >= 500 && failures < MAX_RETRIES) {
+        failures++;
+        stats.retries++;
+        continue;
+      }
+      return { status: res.status, text: await res.text() };
+    } catch (err) {
+      // Timeout or network error: retry with a fresh request.
+      if (failures >= MAX_RETRIES) throw err;
+      failures++;
+      stats.retries++;
     }
-    return { status: res.status, text: await res.text() };
   }
 }
 
@@ -109,11 +126,19 @@ async function handle(req, res) {
   }
 }
 
-for (const host of BINDS) {
+const servers = BINDS.map((host) =>
   http
     .createServer(handle)
     .on("error", (e) => console.error(`rpc-throttle: cannot bind ${host}:${PORT} (${e.code})`))
-    .listen(PORT, host, () => console.log(`rpc-throttle listening on ${host}:${PORT} at ${RPS} req/s`));
-}
+    .listen(PORT, host, () => console.log(`rpc-throttle listening on ${host}:${PORT} at ${RPS} req/s`)),
+);
+
+// Graceful stop: refuse new connections, let in-flight requests finish, then exit.
+process.on("SIGTERM", () => {
+  console.log("rpc-throttle: SIGTERM, draining");
+  let open = servers.length;
+  for (const s of servers) s.close(() => --open === 0 && process.exit(0));
+  setTimeout(() => process.exit(0), UPSTREAM_TIMEOUT_MS + 5_000).unref();
+});
 
 setInterval(() => console.log(`rpc-throttle stats ${JSON.stringify(stats)}`), 60_000).unref();
