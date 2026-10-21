@@ -141,7 +141,11 @@ const servers = BINDS.map((host) =>
 process.on("SIGTERM", () => {
   console.log("rpc-throttle: SIGTERM, draining");
   let open = servers.length;
-  for (const s of servers) s.close(() => --open === 0 && process.exit(0));
+  for (const s of servers) {
+    s.close(() => --open === 0 && process.exit(0));
+    // Idle keep-alive sockets would otherwise be cut at exit, mid-reuse by the client.
+    s.closeIdleConnections();
+  }
   setTimeout(() => process.exit(0), UPSTREAM_TIMEOUT_MS + 5_000).unref();
 });
 
