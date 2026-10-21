@@ -129,7 +129,11 @@ async function handle(req, res) {
 const servers = BINDS.map((host) =>
   http
     .createServer(handle)
-    .on("error", (e) => console.error(`rpc-throttle: cannot bind ${host}:${PORT} (${e.code})`))
+    .on("error", (e) => {
+      // Exit so a supervisor (systemd Restart=always) retries, instead of running without a listener.
+      console.error(`rpc-throttle: cannot bind ${host}:${PORT} (${e.code})`);
+      process.exit(1);
+    })
     .listen(PORT, host, () => console.log(`rpc-throttle listening on ${host}:${PORT} at ${RPS} req/s`)),
 );
 
