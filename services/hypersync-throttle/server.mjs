@@ -12,7 +12,7 @@
  * retries included. Split the token's budget across hosts so the sum stays under it.
  */
 import http from "node:http";
-import { Readable } from "node:stream";
+import { Readable, pipeline } from "node:stream";
 
 const RPM = Math.max(1, Number(process.env.HYPERSYNC_RPM || 10));
 const HEIGHT_TTL_MS = Number(process.env.HYPERSYNC_HEIGHT_TTL_MS || 20_000);
@@ -144,7 +144,14 @@ function handler(chainId) {
         if (!["content-encoding", "content-length", "transfer-encoding", "connection"].includes(k)) headers[k] = v;
       }
       resp.writeHead(res.status, headers);
-      if (res.body) Readable.fromWeb(res.body).pipe(resp);
+      // pipeline (not pipe) so an upstream error mid-body, e.g. the timeout firing, drops this
+      // client's connection instead of surfacing as an unhandled 'error' that kills the process.
+      if (res.body)
+        pipeline(Readable.fromWeb(res.body), resp, (err) => {
+          if (!err) return;
+          stats.errors++;
+          console.error(`[hypersync-throttle] ${chainId} ${req.method} ${req.url}: body: ${err?.message || err}`);
+        });
       else resp.end();
     } catch (err) {
       stats.errors++;
