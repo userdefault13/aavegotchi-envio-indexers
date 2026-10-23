@@ -3,6 +3,17 @@ import aavegotchiDiamondAbi from "../../../abis/AavegotchiDiamond.json";
 import { CORE_DIAMOND_ADDRESS } from "../constants";
 import { getOrFetchRpc, rpcCacheKey } from "../rpcCache";
 
+/**
+ * A contract revert (e.g. a token that doesn't exist yet) or empty return data means "no data".
+ * Anything else (unreachable RPC, timeout, rate limit) is rethrown so the indexer stops and retries
+ * instead of silently writing entities without chain data.
+ */
+function noDataOnRevert(err: unknown): undefined {
+  const code = (err as { code?: string } | null)?.code;
+  if (code === "CALL_EXCEPTION" || code === "BAD_DATA") return undefined;
+  throw err;
+}
+
 function resolveRpcUrl(): string {
   if (process.env.BASE_MAINNET_RPC) return process.env.BASE_MAINNET_RPC;
   return "https://mainnet.base.org";
@@ -10,7 +21,13 @@ function resolveRpcUrl(): string {
 
 const fetchRequest = new FetchRequest(resolveRpcUrl());
 fetchRequest.timeout = 30_000;
-const provider = new JsonRpcProvider(fetchRequest, undefined, { batchMaxCount: 10, batchStallTime: 25 });
+const provider = new JsonRpcProvider(fetchRequest, 8453, {
+  // Base only. A static network skips startup detection, which retries forever on a dead RPC
+  // instead of failing the call.
+  staticNetwork: true,
+  batchMaxCount: 10,
+  batchStallTime: 25,
+});
 const diamond = new Contract(
   CORE_DIAMOND_ADDRESS,
   aavegotchiDiamondAbi,
@@ -29,8 +46,8 @@ export async function fetchAavegotchiSvg(
           blockTag: Number(blockNumber),
         });
         return String(result);
-      } catch {
-        return undefined;
+      } catch (err) {
+        return noDataOnRevert(err);
       }
     },
   );
@@ -59,8 +76,8 @@ export async function fetchItemSvgs(
             }),
           );
           return result || undefined;
-        } catch {
-          return undefined;
+        } catch (err) {
+          return noDataOnRevert(err);
         }
       }),
     ),
@@ -79,8 +96,8 @@ export async function fetchAavegotchiSideSvgs(
           blockTag: Number(blockNumber),
         });
         return [...result].map((s) => String(s));
-      } catch {
-        return undefined;
+      } catch (err) {
+        return noDataOnRevert(err);
       }
     },
   );

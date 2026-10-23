@@ -30,6 +30,12 @@ AavegotchiDiamond.ClaimAavegotchi.handler(async ({ event, context }) => {
   await updateGotchiSvg(context, event.params._tokenId, blockRef(event).number);
 });
 
+// Base migration: setMetadata turns bridged portals into gotchis without an event, then the bridge
+// emitted ResyncAavegotchis for each one (several times); the last one carries the final art.
+AavegotchiDiamond.ResyncAavegotchis.handler(async ({ event, context }) => {
+  await updateGotchiSvg(context, event.params._tokenId, blockRef(event).number);
+});
+
 AavegotchiDiamond.EquipWearables.handler(async ({ event, context }) => {
   await updateGotchiSvg(context, event.params._tokenId, blockRef(event).number);
 });

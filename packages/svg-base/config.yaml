@@ -7,6 +7,7 @@ contracts:
     handler: ./src/EventHandlers.ts
     events:
       - event: ClaimAavegotchi
+      - event: ResyncAavegotchis
       - event: EquipWearables
       - event: AddItemType
       - event: UpdateItemType

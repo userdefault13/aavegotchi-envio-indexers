@@ -1,4 +1,5 @@
 import "./handlers/erc721Listings";
+import "./handlers/migration";
 import "./handlers/erc1155Listings";
 import "./handlers/gotchiLending";
 import "./handlers/gbm";
