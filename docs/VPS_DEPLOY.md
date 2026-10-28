@@ -1,6 +1,6 @@
 # VPS deployment (cheapest self-host)
 
-Run **core + gotchiverse + GraphQL proxy** on one Linux server. No FLUX tokens required.
+Run **core + gotchiverse + GraphQL proxy** on one Linux server.
 
 ## Recommended providers (cheapest first)
 
@@ -11,7 +11,7 @@ Run **core + gotchiverse + GraphQL proxy** on one Linux server. No FLUX tokens r
 | **[DigitalOcean](https://www.digitalocean.com)** | Memory-Optimized 4 vCPU | 32 GB | 100 GB + volume | **~$200+** |
 | **[Vultr](https://www.vultr.com)** | High memory | 32 GB | 200+ GB | **~$80–120** |
 
-**Pick Hetzner CCX33 (32 GB RAM)** if you want the best price for this stack (~29 GB RAM used at Flux spec sizes).
+**Pick Hetzner CCX33 (32 GB RAM)** if you want the best price for this stack.
 
 **Region:** US (Ashburn) or EU — close to your users and your RPC provider.
 
@@ -156,4 +156,4 @@ And `sudo ufw allow 8787/tcp` — prefer Cloudflare instead.
 | Cloudflare | $0 |
 | **Total** | **~$55–110** |
 
-vs Flux (~$7–12 in FLUX, but you need tokens) or Goldsky (~$100–500+).
+vs Goldsky (~$100–500+).

@@ -24,30 +24,15 @@ See [Envio RPC fallback guide](https://docs.envio.dev/docs/HyperIndex/rpc-sync).
 
 ## 3. Production VPS (recommended)
 
-No FLUX required. See **[VPS_DEPLOY.md](./VPS_DEPLOY.md)** — Hetzner/OVH ~**$50–80/mo** for the full stack.
+See **[VPS_DEPLOY.md](./VPS_DEPLOY.md)** — Hetzner/OVH ~**$50–80/mo** for the full stack.
 
 ```bash
 npm run docker:prod
 ```
 
-## 3b. RunOnFlux (optional)
+## 4. Cloudflare
 
-Requires FLUX tokens. See [FLUX_DEPLOY.md](./FLUX_DEPLOY.md).
-
-## 4. Docker Hub
-
-1. Create account `userdefault13` (or your org user)
-2. Set `DOCKERHUB_USER=userdefault13`
-3. Build and push images:
-
-```bash
-docker build -t userdefault13/aavegotchi-core-envio:latest packages/core-base
-docker push userdefault13/aavegotchi-core-envio:latest
-```
-
-## 5. Cloudflare
-
-See [CLOUDFLARE.md](./CLOUDFLARE.md) for tunnel setup in front of Flux endpoints.
+See [CLOUDFLARE.md](./CLOUDFLARE.md) for tunnel setup in front of the GraphQL proxy.
 
 ## Local quick start
 

@@ -9,7 +9,7 @@
  *   npm run reconcile:erc1155
  *   npm run reconcile:erc1155:dry
  *
- * Usage (inside Flux/indexer container):
+ * Usage (inside the indexer container):
  *   node /opt/envio-scripts/reconcile-erc1155-listings.mjs --target env --stack monolith
  *
  * Env: ALCHEMY_API_KEY or BASE_MAINNET_RPC, ENVIO_PG_* (or .env for docker target)
@@ -72,7 +72,7 @@ function resolveEthersRequire() {
     }
   }
   throw new Error(
-    "Cannot find ethers — run from repo root or Flux indexer container",
+    "Cannot find ethers — run from repo root or the indexer container",
   );
 }
 

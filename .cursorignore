@@ -4,7 +4,6 @@ packages/*/generated/
 packages/*/build/
 services/*/dist/
 docker/**/data/
-flux/out/
 .git/
 .github/
 *.log

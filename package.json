@@ -2,7 +2,7 @@
   "name": "aavegotchi-envio-indexers",
   "private": true,
   "version": "0.1.0",
-  "description": "Self-hosted Aavegotchi Core + Gotchiverse indexers (Envio + Docker + RunOnFlux)",
+  "description": "Self-hosted Aavegotchi Core + Gotchiverse indexers (Envio + Docker)",
   "scripts": {
     "codegen:core": "bash scripts/ensure-pnpm.sh && cd packages/core-base && npm run codegen",
     "codegen:gv": "bash scripts/ensure-pnpm.sh && cd packages/gotchiverse-base && npm run codegen",
@@ -69,13 +69,6 @@
     "docker:down": "docker compose -f docker/core-base/docker-compose.yaml down && docker compose -f docker/gotchiverse-base/docker-compose.yaml down && docker compose -f docker/svg-base/docker-compose.yaml down && docker compose -f docker/portal-base/docker-compose.yaml down && docker compose -f docker/alchemica-base/docker-compose.yaml down && docker compose -f docker/gltr-staking-base/docker-compose.yaml down && docker compose -f docker/gbm-baazaar-base/docker-compose.yaml down && docker compose -f docker/graphql-proxy/docker-compose.yaml down",
     "parity": "bash scripts/parity-check.sh",
     "smoke": "bash scripts/smoke-test.sh",
-    "flux:prepare": "node scripts/prepare-flux-specs.mjs",
-    "flux:preflight": "node scripts/flux-preflight.mjs",
-    "flux:print-env": "node scripts/flux-print-env.mjs",
-    "flux:test:core": "bash scripts/flux-test-core.sh",
-    "flux:build": "bash scripts/build-flux-images.sh",
-    "flux:build:push": "PUSH=1 bash scripts/build-flux-images.sh",
-    "flux:build:gbm:push": "BUILD_ONLY=gbm,proxy PUSH=1 bash scripts/build-flux-images.sh",
     "test:avax-h1": "cd packages/avax-h1-market && npm test"
   },
   "engines": {
