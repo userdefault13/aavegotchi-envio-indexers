@@ -1,0 +1,42 @@
+# yaml-language-server: $schema=./node_modules/envio/evm.schema.json
+#
+# Aavegotchi H1 on Avalanche: Baazaar market indexer.
+# Active network: Fuji testnet (43113). Avalanche mainnet (43114) is config-ready
+# but DISABLED: see config.avalanche.yaml (no mainnet diamond is deployed yet).
+#
+# HyperSync is the primary source (https://43113.hypersync.xyz). The public RPC
+# below is only a stall fallback; its eth_getLogs range cap is tiny, so don't
+# rely on it for backfill.
+name: aavegotchi-avax-h1-market
+description: Aavegotchi H1 (Avalanche) ERC721 listings, ERC721 buy orders and H1 token transfers
+contracts:
+  - name: AavegotchiH1Diamond
+    abi_file_path: ./abis/AavegotchiH1Diamond.json
+    handler: ./src/EventHandlers.ts
+    events:
+      - event: ERC721ListingAdd
+      - event: ERC721ExecutedListing
+      - event: ERC721ExecutedToRecipient
+      - event: ERC721ListingCancelled
+      - event: ERC721ListingRemoved
+      - event: ERC721ListingPriceUpdate
+      - event: ERC721BuyOrderAdded
+      - event: ERC721BuyOrderExecuted
+      - event: ERC721BuyOrderCanceled
+      - event: Transfer
+networks:
+  - id: 43113
+    # Diamond creation tx 0x175d02d816e1cadcb1d03efd4ce0fe25860b81d6eea4a1de838babf0c5f1ee71 (2026-10-25)
+    start_block: 60035008
+    rpc:
+      - url: https://api.avax-test.network/ext/bc/C/rpc
+        for: fallback
+        fallback_stall_timeout: 15000
+        query_timeout_millis: 20000
+    contracts:
+      - name: AavegotchiH1Diamond
+        address: "0x86979152855A431befb2e2CFa78961d72e22Acb3"
+unordered_multichain_mode: false
+field_selection:
+  transaction_fields:
+    - hash

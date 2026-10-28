@@ -1,0 +1,30 @@
+{
+  "name": "@aavegotchi/avax-h1-market-indexer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Aavegotchi H1 (Avalanche) Baazaar indexer: ERC721 listings, ERC721 buy orders (offers), H1 token transfers",
+  "scripts": {
+    "clean": "tsc --clean",
+    "build": "tsc --build",
+    "watch": "tsc --watch",
+    "codegen": "envio codegen",
+    "codegen:avalanche": "envio codegen --config config.avalanche.yaml",
+    "dev": "envio dev",
+    "start": "envio start",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "TS_NODE_TRANSPILE_ONLY=1 node --no-experimental-strip-types -r ./generated/node_modules/ts-node/register --test test/*.test.ts"
+  },
+  "devDependencies": {
+    "@types/node": "20.8.8",
+    "typescript": "5.2.2"
+  },
+  "dependencies": {
+    "envio": "2.26.0-rc.2"
+  },
+  "optionalDependencies": {
+    "generated": "./generated"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

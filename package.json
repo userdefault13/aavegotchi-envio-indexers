@@ -8,6 +8,7 @@
     "codegen:gv": "bash scripts/ensure-pnpm.sh && cd packages/gotchiverse-base && npm run codegen",
     "codegen:svg": "bash scripts/ensure-pnpm.sh && cd packages/svg-base && npm run codegen",
     "codegen:portal": "bash scripts/ensure-pnpm.sh && cd packages/portal-base && npm run codegen",
+    "codegen:avax-h1": "bash scripts/ensure-pnpm.sh && cd packages/avax-h1-market && npm run codegen",
     "codegen:alchemica": "bash scripts/ensure-pnpm.sh && cd packages/alchemica-base && npm run codegen",
     "codegen:staking": "bash scripts/ensure-pnpm.sh && cd packages/gltr-staking-base && npm run codegen",
     "codegen:gbm": "bash scripts/ensure-pnpm.sh && cd packages/gbm-baazaar-base && npm run codegen",
@@ -17,6 +18,7 @@
     "build:gv": "cd packages/gotchiverse-base && npm run build",
     "build:svg": "cd packages/svg-base && npm run build",
     "build:portal": "cd packages/portal-base && npm run build",
+    "build:avax-h1": "cd packages/avax-h1-market && npm run build",
     "build:alchemica": "cd packages/alchemica-base && npm run build",
     "build:staking": "cd packages/gltr-staking-base && npm run build",
     "build:gbm": "cd packages/gbm-baazaar-base && npm run build",
@@ -33,6 +35,7 @@
     "docker:gv": "bash scripts/docker-gotchiverse-up.sh up --build -d",
     "docker:svg": "bash scripts/docker-svg-up.sh up --build -d",
     "docker:portal": "bash scripts/docker-portal-up.sh up --build -d",
+    "docker:avax-h1": "bash scripts/docker-avax-h1-up.sh up --build -d",
     "docker:alchemica": "bash scripts/docker-alchemica-up.sh up --build -d",
     "docker:staking": "bash scripts/docker-staking-up.sh up --build -d",
     "docker:gbm": "bash scripts/docker-gbm-up.sh up --build -d",
@@ -72,7 +75,8 @@
     "flux:test:core": "bash scripts/flux-test-core.sh",
     "flux:build": "bash scripts/build-flux-images.sh",
     "flux:build:push": "PUSH=1 bash scripts/build-flux-images.sh",
-    "flux:build:gbm:push": "BUILD_ONLY=gbm,proxy PUSH=1 bash scripts/build-flux-images.sh"
+    "flux:build:gbm:push": "BUILD_ONLY=gbm,proxy PUSH=1 bash scripts/build-flux-images.sh",
+    "test:avax-h1": "cd packages/avax-h1-market && npm test"
   },
   "engines": {
     "node": ">=20"

@@ -1,0 +1,41 @@
+# yaml-language-server: $schema=./node_modules/envio/evm.schema.json
+#
+# Avalanche C-Chain mainnet (43114): DISABLED / not deployed.
+# H1 has no mainnet diamond yet. To enable later:
+#   1. replace AVALANCHE_H1_DIAMOND_ADDRESS + start_block with the real deploy values
+#   2. pnpm codegen:avalanche && run with CONFIG_FILE=config.avalanche.yaml
+# Handlers and schema are shared with config.yaml (all entities carry chainId).
+name: aavegotchi-avax-h1-market-mainnet
+description: Aavegotchi H1 (Avalanche mainnet) ERC721 listings, buy orders and transfers
+contracts:
+  - name: AavegotchiH1Diamond
+    abi_file_path: ./abis/AavegotchiH1Diamond.json
+    handler: ./src/EventHandlers.ts
+    events:
+      - event: ERC721ListingAdd
+      - event: ERC721ExecutedListing
+      - event: ERC721ExecutedToRecipient
+      - event: ERC721ListingCancelled
+      - event: ERC721ListingRemoved
+      - event: ERC721ListingPriceUpdate
+      - event: ERC721BuyOrderAdded
+      - event: ERC721BuyOrderExecuted
+      - event: ERC721BuyOrderCanceled
+      - event: Transfer
+networks:
+  - id: 43114
+    # TODO(mainnet): set to the H1 mainnet diamond deploy block.
+    start_block: 0
+    rpc:
+      - url: https://api.avax.network/ext/bc/C/rpc
+        for: fallback
+        fallback_stall_timeout: 15000
+        query_timeout_millis: 20000
+    contracts:
+      - name: AavegotchiH1Diamond
+        # TODO(mainnet): AVALANCHE_H1_DIAMOND_ADDRESS. Placeholder; do not start with this config.
+        address: "0x0000000000000000000000000000000000000000"
+unordered_multichain_mode: false
+field_selection:
+  transaction_fields:
+    - hash
