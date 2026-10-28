@@ -49,8 +49,6 @@ services:
     build:
       context: ../..
       dockerfile: packages/avax-h1-market/Dockerfile
-      args:
-        ENVIO_API_TOKEN: ${ENVIO_API_TOKEN:-development}
     depends_on:
       graphql-engine:
         condition: service_healthy

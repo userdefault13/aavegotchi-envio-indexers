@@ -46,14 +46,12 @@ services:
     build:
       context: ../..
       dockerfile: packages/core-base/Dockerfile
-      args:
-        ENVIO_API_TOKEN: ${ENVIO_API_TOKEN:?set ENVIO_API_TOKEN}
     restart: unless-stopped
     depends_on:
       core-hasura:
         condition: service_healthy
     environment:
-      ENVIO_API_TOKEN: ${ENVIO_API_TOKEN}
+      ENVIO_API_TOKEN: ${ENVIO_API_TOKEN:?set ENVIO_API_TOKEN}
       ENVIO_PG_PASSWORD: ${ENVIO_PG_PASSWORD}
       ENVIO_PG_HOST: core-postgres
       ENVIO_PG_PORT: 5432
@@ -115,14 +113,12 @@ services:
     build:
       context: ../..
       dockerfile: packages/gotchiverse-base/Dockerfile
-      args:
-        ENVIO_API_TOKEN: ${ENVIO_API_TOKEN}
     restart: unless-stopped
     depends_on:
       gv-hasura:
         condition: service_healthy
     environment:
-      ENVIO_API_TOKEN: ${ENVIO_API_TOKEN}
+      ENVIO_API_TOKEN: ${ENVIO_API_TOKEN:?set ENVIO_API_TOKEN}
       ENVIO_PG_PASSWORD: ${ENVIO_PG_PASSWORD}
       ENVIO_PG_HOST: gv-postgres
       ENVIO_PG_PORT: 5432

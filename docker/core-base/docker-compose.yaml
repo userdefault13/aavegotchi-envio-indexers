@@ -47,8 +47,6 @@ services:
     build:
       context: ../..
       dockerfile: packages/core-base/Dockerfile
-      args:
-        ENVIO_API_TOKEN: ${ENVIO_API_TOKEN:-development}
     depends_on:
       graphql-engine:
         condition: service_healthy

@@ -20,8 +20,8 @@ RUN npm install
 
 COPY packages/portal-base/ ./
 
-ARG ENVIO_API_TOKEN=development
-ENV ENVIO_API_TOKEN=$ENVIO_API_TOKEN
+# ENVIO_API_TOKEN is runtime-only (compose `environment:` / Flux env). envio codegen and
+# the TypeScript build do not need it, so it is never baked into an image layer.
 RUN npx envio codegen
 
 RUN npm run build
