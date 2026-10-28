@@ -1,0 +1,281 @@
+[
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "ERC721ListingAdd",
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "listingId",
+        "indexed": true
+      },
+      {
+        "type": "address",
+        "name": "seller",
+        "indexed": true
+      },
+      {
+        "type": "address",
+        "name": "erc721TokenAddress"
+      },
+      {
+        "type": "uint256",
+        "name": "erc721TokenId"
+      },
+      {
+        "type": "uint256",
+        "name": "category",
+        "indexed": true
+      },
+      {
+        "type": "uint256",
+        "name": "time"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "ERC721ExecutedListing",
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "listingId",
+        "indexed": true
+      },
+      {
+        "type": "address",
+        "name": "seller",
+        "indexed": true
+      },
+      {
+        "type": "address",
+        "name": "buyer"
+      },
+      {
+        "type": "address",
+        "name": "erc721TokenAddress"
+      },
+      {
+        "type": "uint256",
+        "name": "erc721TokenId"
+      },
+      {
+        "type": "uint256",
+        "name": "category",
+        "indexed": true
+      },
+      {
+        "type": "uint256",
+        "name": "priceInWei"
+      },
+      {
+        "type": "uint256",
+        "name": "time"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "ERC721ExecutedToRecipient",
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "listingId",
+        "indexed": true
+      },
+      {
+        "type": "address",
+        "name": "buyer",
+        "indexed": true
+      },
+      {
+        "type": "address",
+        "name": "recipient",
+        "indexed": true
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "ERC721ListingCancelled",
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "listingId",
+        "indexed": true
+      },
+      {
+        "type": "uint256",
+        "name": "category"
+      },
+      {
+        "type": "uint256",
+        "name": "time"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "ERC721ListingRemoved",
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "listingId",
+        "indexed": true
+      },
+      {
+        "type": "uint256",
+        "name": "category"
+      },
+      {
+        "type": "uint256",
+        "name": "time"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "ERC721ListingPriceUpdate",
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "listingId",
+        "indexed": true
+      },
+      {
+        "type": "uint256",
+        "name": "priceInWei"
+      },
+      {
+        "type": "uint256",
+        "name": "time"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "ERC721BuyOrderAdded",
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "buyOrderId",
+        "indexed": true
+      },
+      {
+        "type": "address",
+        "name": "buyer",
+        "indexed": true
+      },
+      {
+        "type": "address",
+        "name": "erc721TokenAddress"
+      },
+      {
+        "type": "uint256",
+        "name": "erc721TokenId"
+      },
+      {
+        "type": "uint256",
+        "name": "category",
+        "indexed": true
+      },
+      {
+        "type": "uint256",
+        "name": "priceInWei"
+      },
+      {
+        "type": "uint256",
+        "name": "duration"
+      },
+      {
+        "type": "bytes32",
+        "name": "validationHash"
+      },
+      {
+        "type": "uint256",
+        "name": "time"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "ERC721BuyOrderExecuted",
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "buyOrderId",
+        "indexed": true
+      },
+      {
+        "type": "address",
+        "name": "buyer",
+        "indexed": true
+      },
+      {
+        "type": "address",
+        "name": "seller"
+      },
+      {
+        "type": "address",
+        "name": "erc721TokenAddress"
+      },
+      {
+        "type": "uint256",
+        "name": "erc721TokenId"
+      },
+      {
+        "type": "uint256",
+        "name": "priceInWei"
+      },
+      {
+        "type": "uint256",
+        "name": "time"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "ERC721BuyOrderCanceled",
+    "inputs": [
+      {
+        "type": "uint256",
+        "name": "buyOrderId",
+        "indexed": true
+      },
+      {
+        "type": "uint256",
+        "name": "time"
+      }
+    ]
+  },
+  {
+    "type": "event",
+    "anonymous": false,
+    "name": "Transfer",
+    "inputs": [
+      {
+        "type": "address",
+        "name": "_from",
+        "indexed": true
+      },
+      {
+        "type": "address",
+        "name": "_to",
+        "indexed": true
+      },
+      {
+        "type": "uint256",
+        "name": "_tokenId",
+        "indexed": true
+      }
+    ]
+  }
+]

@@ -1,0 +1,77 @@
+# Aavegotchi H1 (Avalanche) Baazaar. Every entity carries chainId; ids are
+# "<chainId>-<onchainId>" so Fuji (43113) and mainnet (43114) can share one DB.
+# Addresses are stored lowercase. Prices are raw USDC units (6 decimals).
+
+"ERC721 listing (portals cat 0/2, gotchis cat 3). status: active | sold | cancelled | removed"
+type ERC721Listing @entity {
+  id: ID!
+  chainId: Int!
+  listingId: BigInt!
+  category: BigInt! @index
+  erc721TokenAddress: String!
+  tokenId: BigInt! @index
+  seller: String! @index
+  buyer: String
+  recipient: String
+  priceInWei: BigInt!
+  status: String! @index
+  timeCreated: BigInt!
+  timeUpdated: BigInt!
+  timePurchased: BigInt
+  timeCancelled: BigInt
+  blockCreated: BigInt!
+  txCreated: String!
+}
+
+"ERC721 buy order (offer). USDC is escrowed in the diamond while active. status: active | executed | cancelled. Expiry is timeCreated + duration (duration 0 = never); compute client-side."
+type ERC721BuyOrder @entity {
+  id: ID!
+  chainId: Int!
+  buyOrderId: BigInt!
+  buyer: String! @index
+  seller: String
+  erc721TokenAddress: String!
+  tokenId: BigInt! @index
+  category: BigInt
+  priceInWei: BigInt!
+  duration: BigInt!
+  validationHash: String!
+  status: String! @index
+  timeCreated: BigInt!
+  timePurchased: BigInt
+  timeCancelled: BigInt
+  blockCreated: BigInt!
+  txCreated: String!
+}
+
+"Append-only feed for the Activity tab. kind: listing_add | listing_sale | listing_cancel | listing_removed | listing_price | offer_add | offer_accept | offer_cancel | transfer"
+type MarketActivity @entity {
+  id: ID!
+  chainId: Int!
+  kind: String! @index
+  listingId: BigInt
+  buyOrderId: BigInt
+  erc721TokenAddress: String
+  tokenId: BigInt @index
+  category: BigInt
+  "seller / previous owner"
+  from: String
+  "buyer / new owner"
+  to: String
+  priceInWei: BigInt
+  timestamp: BigInt! @index
+  blockNumber: BigInt!
+  txHash: String!
+  logIndex: Int!
+}
+
+"Current owner of an H1 portal/gotchi token (diamond ERC721 Transfer)."
+type H1Token @entity {
+  id: ID!
+  chainId: Int!
+  tokenId: BigInt!
+  owner: String! @index
+  transfers: Int!
+  mintedAt: BigInt
+  lastTransferAt: BigInt!
+}

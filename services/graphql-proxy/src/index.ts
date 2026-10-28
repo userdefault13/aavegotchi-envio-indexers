@@ -53,6 +53,8 @@ const GBM_HASURA_URL = process.env.GBM_HASURA_URL;
 const CARTRIDGE_HASURA_URL = process.env.CARTRIDGE_HASURA_URL;
 const ACARTRIDGE_HASURA_URL = process.env.ACARTRIDGE_HASURA_URL;
 const CORE_HASURA_URL = process.env.CORE_HASURA_URL ?? HASURA_URL;
+/** Aavegotchi H1 on Avalanche (Fuji 43113 today): packages/avax-h1-market. */
+const AVAX_H1_HASURA_URL = process.env.AVAX_H1_HASURA_URL;
 /** cryptoPnL tokens indexer on omarchywin (own Hasura + admin secret). */
 const CRYPTOPNL_HASURA_URL = process.env.CRYPTOPNL_HASURA_URL;
 
@@ -68,10 +70,13 @@ const SUBGRAPH_PATHS = [
   "aarcade-cartridge-base",
   "aarcade-acartridge-base",
   "cryptopnl-tokens-base",
+  "aavegotchi-avax-h1-market",
 ] as const;
 
 function resolveHasuraUrl(path: string, query: string): string {
   if (path.includes("cryptopnl-tokens-base") && CRYPTOPNL_HASURA_URL) return CRYPTOPNL_HASURA_URL;
+  // Avalanche H1 market has its own DB; checked before the generic "baazaar"/"portal" matches.
+  if (path.includes("avax-h1") && AVAX_H1_HASURA_URL) return AVAX_H1_HASURA_URL;
   // aCartridge (agents) — checked first: "aarcade-acartridge-base" also matches "cartridge-base" below
   if (path.includes("acartridge") && ACARTRIDGE_HASURA_URL) {
     return ACARTRIDGE_HASURA_URL;
@@ -523,5 +528,6 @@ app.listen(PORT, () => {
   if (GBM_HASURA_URL) console.log(`  GBM Hasura: ${GBM_HASURA_URL}`);
   if (CARTRIDGE_HASURA_URL) console.log(`  Cartridge Hasura: ${CARTRIDGE_HASURA_URL}`);
   if (ACARTRIDGE_HASURA_URL) console.log(`  aCartridge Hasura: ${ACARTRIDGE_HASURA_URL}`);
+  if (AVAX_H1_HASURA_URL) console.log(`  Avalanche H1 Hasura: ${AVAX_H1_HASURA_URL}`);
   console.log(`  Subgraph paths: ${SUBGRAPH_PATHS.join(", ")}`);
 });
