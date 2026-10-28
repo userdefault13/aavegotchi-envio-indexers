@@ -53,10 +53,10 @@ See [CLOUDFLARE.md](./CLOUDFLARE.md) for tunnel setup in front of Flux endpoints
 
 ```bash
 cp .env.example .env
-# edit ENVIO_API_TOKEN
+# edit ENVIO_API_TOKEN (runtime-only; codegen/build don't need it)
 
-cd packages/core-base && npm install && ENVIO_API_TOKEN=... npm run codegen && npm run build
-cd ../gotchiverse-base && npm install && ENVIO_API_TOKEN=... npm run codegen && npm run build
+cd packages/core-base && npm install && npm run codegen && npm run build
+cd ../gotchiverse-base && npm install && npm run codegen && npm run build
 
 cd ../..
 npm run docker:core

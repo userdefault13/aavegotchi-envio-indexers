@@ -39,6 +39,8 @@ npm test             # 8 pure-logic tests + 3 wired MockDb handler tests (needs 
 npm run docker:avax-h1   # postgres :5444, hasura :8091, indexer :9901
 ```
 
+`ENVIO_API_TOKEN` is runtime-only: set it in the repo-root `.env` and compose passes it to the
+indexer container by name. It isn't a build arg; codegen and the build run without it.
 Optional `HYPERSYNC_URL_43113` points HyperSync at a local throttle/proxy
 (handled by `scripts/ensure-hypersync-url.mjs`). The Base RPC injector ignores this chain.
 

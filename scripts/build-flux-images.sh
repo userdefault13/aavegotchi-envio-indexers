@@ -9,7 +9,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 
 DOCKER_USER="${DOCKERHUB_USER:-userdefault13}"
 TAG="${1:-latest}"
-ENVIO_TOKEN="${ENVIO_API_TOKEN:-development}"
+# ENVIO_API_TOKEN is NOT passed to builds: it is runtime-only (Flux spec env), never baked into images.
 PLATFORM="${DOCKER_PLATFORM:-linux/amd64}"
 
 docker buildx inspect flux-builder >/dev/null 2>&1 || docker buildx create --name flux-builder --use
@@ -25,7 +25,6 @@ build_indexer_image() {
   if [ "${PUSH:-0}" = "1" ]; then
     docker buildx build \
       --platform "$PLATFORM" \
-      --build-arg "ENVIO_API_TOKEN=$ENVIO_TOKEN" \
       -t "$image" \
       -f "$dockerfile" \
       --push \
@@ -33,7 +32,6 @@ build_indexer_image() {
   else
     docker buildx build \
       --platform "$PLATFORM" \
-      --build-arg "ENVIO_API_TOKEN=$ENVIO_TOKEN" \
       -t "$image" \
       -f "$dockerfile" \
       --load \

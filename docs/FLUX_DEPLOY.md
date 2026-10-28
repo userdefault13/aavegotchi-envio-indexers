@@ -103,7 +103,9 @@ Flux nodes run **linux/amd64**. On a Mac (arm64), you must build for amd64 (the 
 
 ```bash
 chmod +x scripts/build-flux-images.sh
-ENVIO_API_TOKEN=your_token PUSH=1 ./scripts/build-flux-images.sh
+PUSH=1 ./scripts/build-flux-images.sh
+# No token at build time: images never contain ENVIO_API_TOKEN. It's supplied at runtime
+# through the Flux app spec env (ENVIO_API_TOKEN=..., see prepare-flux-specs.mjs).
 ```
 
 Or:

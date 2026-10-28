@@ -39,11 +39,13 @@ Or use `bash scripts/ensure-pnpm.sh` (also runs automatically before `npm run co
 
 ```bash
 cp .env.example .env
-# Set ENVIO_API_TOKEN from https://envio.dev
+# ENVIO_API_TOKEN (from https://envio.dev) is a RUNTIME secret: it's read by the indexer
+# process (HyperSync), not by codegen or the build. Set it in .env; compose passes it to the
+# container via `environment:` by name. It is never a Docker build arg and never baked into an image.
 
 # Install & build indexers
-cd packages/core-base && npm install && ENVIO_API_TOKEN=... npm run codegen && npm run build
-cd ../gotchiverse-base && npm install && ENVIO_API_TOKEN=... npm run codegen && npm run build
+cd packages/core-base && npm install && npm run codegen && npm run build
+cd ../gotchiverse-base && npm install && npm run codegen && npm run build
 
 # Build proxy
 cd ../../services/graphql-proxy && npm install && npm run build
