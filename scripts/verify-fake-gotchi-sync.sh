@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Verify FAKE Gotchi entities after core indexer sync (local Hasura or Flux proxy).
+# Verify FAKE Gotchi entities after core indexer sync (local Hasura or the GraphQL proxy).
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
@@ -12,11 +12,11 @@ HASURA_SECRET="${HASURA_GRAPHQL_ADMIN_SECRET:-testing}"
 if [ "$MODE" = "local" ]; then
   URL="http://127.0.0.1:${CORE_HASURA_PORT:-8082}/v1/graphql"
   HDR=(-H "x-hasura-admin-secret: $HASURA_SECRET")
-elif [ "$MODE" = "flux" ]; then
-  URL="${FLUX_PROXY_URL:-https://aavegotchisubgraphproxy.app.runonflux.io}/subgraphs/name/aavegotchi-core-base"
+elif [ "$MODE" = "proxy" ]; then
+  URL="${PROXY_URL:-http://127.0.0.1:${PROXY_PORT:-8787}}/subgraphs/name/aavegotchi-core-base"
   HDR=(-H "content-type: application/json")
 else
-  echo "Usage: $0 [local|flux]"
+  echo "Usage: $0 [local|proxy]"
   exit 1
 fi
 

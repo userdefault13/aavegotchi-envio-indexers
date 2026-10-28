@@ -1,11 +1,11 @@
-# Cloudflare in Front of RunOnFlux
+# Cloudflare in Front of the Indexers
 
-Production GraphQL endpoints should not expose raw Flux HTTP. Use Cloudflare for TLS and routing.
+Production GraphQL endpoints should not expose the raw proxy/Hasura HTTP ports. Use Cloudflare for TLS and routing.
 
 ## Recommended: Cloudflare Tunnel
 
 1. In Cloudflare Zero Trust → **Networks** → **Tunnels**, create a tunnel
-2. Install `cloudflared` on a bridge host (or co-locate with proxy on Flux)
+2. Install `cloudflared` on a bridge host (or on the same host as the proxy)
 3. Route hostnames:
    - `core-subgraph.yourdomain.com` → `http://localhost:8787` (proxy core route)
    - `gotchiverse-subgraph.yourdomain.com` → `http://localhost:8787` (proxy gv route)

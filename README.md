@@ -1,6 +1,6 @@
 # Aavegotchi Envio Indexers
 
-Self-hosted **Aavegotchi Core** and **Gotchiverse** GraphQL indexers on **Base mainnet**, built with [Envio HyperIndex](https://docs.envio.dev), **Docker**, and [RunOnFlux](https://runonflux.io).
+Self-hosted **Aavegotchi Core** and **Gotchiverse** GraphQL indexers on **Base mainnet**, built with [Envio HyperIndex](https://docs.envio.dev) and **Docker**.
 
 Includes a **GraphQL compatibility proxy** so existing apps can keep using The Graph-style queries without code changes.
 
@@ -8,7 +8,7 @@ Includes a **GraphQL compatibility proxy** so existing apps can keep using The G
 
 ```
 Base chain → Envio indexers → Hasura → Compat proxy → Apps (AarcadeGh-t, CLI, skills)
-                ↑ Docker / RunOnFlux
+                ↑ Docker
 ```
 
 | Package | Source | Chain |
@@ -71,7 +71,6 @@ npm run smoke
 | `scripts/parity-check.sh` | Compare Goldsky vs self-hosted proxy |
 | `scripts/reconcile-erc1155-listings.mjs` | Patch stale ERC1155 listing sold/cancelled/qty from chain |
 | `scripts/smoke-test.sh` | Health + schema smoke tests |
-| `scripts/build-flux-images.sh` | Build (and `PUSH=1` push) Flux images |
 | `scripts/deploy-graphql-proxy.sh` | Deploy `services/graphql-proxy` to the home monolith stack (omarchyM1): tests, backup, rebuild, smoke test, auto-rollback. `--dry-run`, `--smoke` |
 
 ## Home stack (omarchyM1): restarting services
@@ -84,13 +83,11 @@ the default Hasura secret and every subgraph query fails (`invalid x-hasura-admi
 
 ## Production deploy (VPS — recommended)
 
-Cheapest path without FLUX tokens: one server (e.g. **Hetzner ~$50/mo**).
+Cheapest path: one server (e.g. **Hetzner ~$50/mo**).
 
 1. [VPS guide](docs/VPS_DEPLOY.md) — create server, `.env`, `npm run docker:prod`
 2. [Cloudflare tunnel](docs/CLOUDFLARE.md) for HTTPS
 3. [Cut over clients](docs/CUTOVER.md)
-
-Optional: [RunOnFlux](docs/FLUX_DEPLOY.md) if you can fund FLUX renewals.
 
 ## Goldsky parity endpoints (reference)
 

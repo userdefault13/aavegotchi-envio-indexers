@@ -20,7 +20,7 @@ RUN npm install
 
 COPY packages/gbm-baazaar-base/ ./
 
-# ENVIO_API_TOKEN is runtime-only (compose `environment:` / Flux env). envio codegen and
+# ENVIO_API_TOKEN is runtime-only (compose `environment:`). envio codegen and
 # the TypeScript build do not need it, so it is never baked into an image layer.
 # Writable pnpm store + fresh generated/ (avoids EROFS from stale overlays)
 ENV PNPM_HOME=/tmp/pnpm-store
