@@ -88,7 +88,8 @@ test("ExecutedListing without a prior entity still produces a sold listing", () 
 
 test("cancel and remove only transition active listings", () => {
   const { listing } = add();
-  const c = onListingClosed(m(3, 3_000n), listing, { listingId: 1n, category: 0n, time: 3_000n }, "listing_cancel");
+  // ERC721ListingCancelled emits block.number in `time`; timeCancelled must be the block timestamp.
+  const c = onListingClosed(m(3, 3_000n), listing, { listingId: 1n, category: 0n, time: 60_163_214n }, "listing_cancel");
   assert.equal(c.listing?.status, "cancelled");
   assert.equal(c.listing?.timeCancelled, 3_000n);
   assert.equal(c.activity.kind, "listing_cancel");
@@ -107,13 +108,13 @@ test("cancel and remove only transition active listings", () => {
   assert.equal(unknown.activity.listingId, 99n);
 });
 
-test("price update changes price and logs activity", () => {
+test("price update is activity-only (contract does not change the stored price)", () => {
   const { listing } = add();
   const u = onListingPriceUpdate(m(7, 4_000n), listing, { listingId: 1n, priceInWei: 3_000_000n, time: 4_000n });
-  assert.equal(u.listing?.priceInWei, 3_000_000n);
-  assert.equal(u.listing?.timeUpdated, 4_000n);
+  assert.equal(u.listing, undefined, "listing entity untouched; buys must use the stored price");
   assert.equal(u.activity.kind, "listing_price");
-  assert.equal(onListingPriceUpdate(m(), undefined, { listingId: 2n, priceInWei: 1n, time: 1n }).listing, undefined);
+  assert.equal(u.activity.priceInWei, 3_000_000n);
+  assert.equal(u.activity.tokenId, 26002n);
 });
 
 test("buy order lifecycle: add -> execute; add -> cancel", () => {

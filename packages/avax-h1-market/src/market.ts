@@ -3,8 +3,14 @@
  * this module is unit-testable without Envio codegen; EventHandlers.ts wires it
  * to the Envio context.
  *
- * Contract quirk (aavegotchi-avax ERC721MarketplaceFacet.sol:257): the last
- * field of ERC721ListingAdd is named `time` but is emitted with `_priceInWei`.
+ * Contract quirks (aavegotchi-avax feat/avax-h1):
+ * - ERC721ListingAdd: the last field is named `time` but is emitted with `_priceInWei`
+ *   (ERC721MarketplaceFacet.sol:257).
+ * - ERC721ListingCancelled: `time` is emitted with `block.number`, not a timestamp
+ *   (LibERC721Marketplace.sol:61, ERC721MarketplaceFacet.sol:188). Use the log's block time.
+ * - ERC721ListingPriceUpdate: the event fires but the stored price is NOT changed
+ *   (the write is commented out in LibERC721Marketplace.updateERC721ListingPrice), and
+ *   execution requires the stored price. So it's logged as activity only.
  */
 
 export const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000";
@@ -252,7 +258,7 @@ export function onListingClosed(
   // Only an active listing transitions; never downgrade a sold one.
   const listing =
     prev && prev.status === "active"
-      ? { ...prev, status, timeCancelled: p.time, timeUpdated: m.timestamp }
+      ? { ...prev, status, timeCancelled: m.timestamp, timeUpdated: m.timestamp }
       : undefined;
   return {
     listing,
@@ -267,13 +273,14 @@ export function onListingClosed(
   };
 }
 
+/** Activity only: the contract emits this event without changing the stored price. */
 export function onListingPriceUpdate(
   m: LogMeta,
   prev: Listing | undefined,
   p: { listingId: bigint; priceInWei: bigint; time: bigint },
 ): { listing: Listing | undefined; activity: Activity } {
   return {
-    listing: prev ? { ...prev, priceInWei: p.priceInWei, timeUpdated: m.timestamp } : undefined,
+    listing: undefined,
     activity: activity(m, "listing_price", {
       listingId: p.listingId,
       erc721TokenAddress: prev?.erc721TokenAddress,

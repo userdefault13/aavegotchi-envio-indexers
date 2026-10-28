@@ -13,8 +13,8 @@ AarcadeGh-t Avalanche Baazaar needs.
 |---|---|
 | `ERC721ListingAdd` | `ERC721Listing` active, activity `listing_add`. **Note:** the event's last field is named `time` but carries the price (`ERC721MarketplaceFacet.sol:257`). |
 | `ERC721ExecutedListing` / `ERC721ExecutedToRecipient` | listing `sold` + buyer/recipient, activity `listing_sale` |
-| `ERC721ListingCancelled` / `ERC721ListingRemoved` | active listing → `cancelled` / `removed`, activity `listing_cancel` / `listing_removed` |
-| `ERC721ListingPriceUpdate` | price, activity `listing_price` |
+| `ERC721ListingCancelled` / `ERC721ListingRemoved` | active listing → `cancelled` / `removed`, activity `listing_cancel` / `listing_removed`. **Note:** Cancelled's `time` field is `block.number`, so `timeCancelled` uses the block timestamp. |
+| `ERC721ListingPriceUpdate` | activity `listing_price` **only**. The contract emits it without changing the stored price (the write is commented out in `updateERC721ListingPrice`), and a buy must pass the stored price. |
 | `ERC721BuyOrderAdded` / `Executed` / `Canceled` | `ERC721BuyOrder` active → executed / cancelled, activity `offer_add` / `offer_accept` / `offer_cancel` |
 | `Transfer` (ERC721) | `H1Token.owner`, activity `transfer` |
 
